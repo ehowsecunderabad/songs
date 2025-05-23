@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,13 +9,15 @@
         @font-face {
             font-family: 'EnglishFont';
             src: local('Arial'), local('Helvetica'), sans-serif;
-            unicode-range: U+0000-00FF; /* Basic Latin */
+            unicode-range: U+0000-00FF;
+            /* Basic Latin */
         }
 
         @font-face {
             font-family: 'TeluguFont';
             src: local('Noto Sans Telugu'), local('Gautami'), sans-serif;
-            unicode-range: U+0C00-0C7F; /* Telugu Unicode block */
+            unicode-range: U+0C00-0C7F;
+            /* Telugu Unicode block */
         }
 
         /* Add these styles inside your <style> tag, before the @media section */
@@ -53,38 +56,46 @@
             background: var(--bg-main);
             color: var(--text-main);
         }
+
         #sidebar {
             display: flex;
             flex-direction: column;
             height: 100vh;
         }
+
         #sidebar h2 {
             margin-top: 0;
             color: var(--text-heading);
         }
+
         .song-list-container {
             flex: 1 1 auto;
             display: flex;
             flex-direction: column;
             min-height: 0;
         }
+
         #song-list {
             flex: 1 1 auto;
             max-height: none;
             overflow-y: auto;
         }
+
         #song-list li {
             padding: 10px 0;
             cursor: pointer;
             border-bottom: 1px solid var(--border-list);
             transition: background-color 0.2s ease;
         }
+
         #song-list li:last-child {
             border-bottom: none;
         }
+
         #song-list li:hover {
             background-color: var(--bg-hover);
         }
+
         #main-pane {
             flex-grow: 1;
             padding: 15px;
@@ -94,6 +105,7 @@
             box-sizing: border-box;
             position: relative;
         }
+
         #main-pane pre {
             margin: 0;
             font-family: 'Courier New', Courier, monospace;
@@ -101,20 +113,25 @@
             line-height: 1.5;
             color: var(--text-main);
             background: none;
-            white-space: pre-wrap; /* Add this line */
+            white-space: pre-wrap;
+            /* Add this line */
         }
+
         .error {
             color: #ff6b6b;
             font-weight: bold;
         }
+
         /* Hide elements utility */
         .mobile-hide {
             display: none !important;
         }
+
         /* Hide back button on desktop */
         #back-btn {
             display: none;
         }
+
         .scroll-overlay-btn {
             position: absolute;
             right: 8px;
@@ -126,29 +143,34 @@
             width: 36px;
             height: 36px;
             font-size: 1.5em;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
             cursor: pointer;
             opacity: 0.85;
             display: none;
             transition: opacity 0.2s;
         }
+
         #scroll-bottom-btn {
             bottom: 8px;
         }
+
         #scroll-top-btn {
             top: 8px;
         }
+
         #theme-toggle-btn {
             margin-top: 0;
             width: 100%;
             flex-shrink: 0;
         }
+
         /* --- Mobile Responsive Styles --- */
         @media (max-width: 600px) {
             body {
                 flex-direction: column;
                 height: auto;
             }
+
             #sidebar {
                 width: 100%;
                 border-right: none;
@@ -156,19 +178,24 @@
                 padding: 10px;
                 height: auto;
             }
+
             .song-list-container {
                 max-height: 50vh;
             }
+
             #main-pane {
                 padding: 10px;
             }
+
             #song-list li {
                 padding: 8px 0;
                 font-size: 1em;
             }
+
             #main-pane pre {
                 font-size: 0.95em;
             }
+
             #back-btn {
                 display: block;
                 margin-bottom: 10px;
@@ -183,17 +210,22 @@
         }
     </style>
 </head>
+
 <body>
     <div id="sidebar">
         <h2>Melodies Of Worship</h2>
         <div class="song-list-container">
             <ul id="song-list"></ul>
-            <button id="scroll-bottom-btn" type="button" class="scroll-overlay-btn" aria-label="Go to bottom" title="Go to bottom">↓</button>
-            <button id="scroll-top-btn" type="button" class="scroll-overlay-btn" aria-label="Go to top" title="Go to top">↑</button>
+            <button id="scroll-bottom-btn" type="button" class="scroll-overlay-btn" aria-label="Go to bottom"
+                title="Go to bottom">↓</button>
+            <button id="scroll-top-btn" type="button" class="scroll-overlay-btn" aria-label="Go to top"
+                title="Go to top">↑</button>
+            <button id="theme-toggle-btn" type="button"
+                style="font-weight:bold; padding:6px 16px; border-radius:4px; border:1px solid var(--border); background:var(--bg-sidebar); color:var(--text-main); cursor:pointer; margin-top:16px; width:100%;">
+                Theme: System Default
+            </button>
         </div>
-        <button id="theme-toggle-btn" type="button" style="font-weight:bold; padding:6px 16px; border-radius:4px; border:1px solid var(--border); background:var(--bg-sidebar); color:var(--text-main); cursor:pointer; margin-top:16px; width:100%;">
-            Theme: System Default
-        </button>
+
     </div>
     <div id="main-pane">
         <button id="back-btn" type="button">← Back to list</button>
@@ -364,14 +396,7 @@
             }
         });
 
-        // Theme switching logic
-        // const themeToggleBtn = document.getElementById('theme-toggle-btn');
-        // const themeModes = ['system', 'light', 'dark'];
-        // const themeLabels = {
-        //     'system': 'Theme: System Default',
-        //     'light': 'Theme: Light',
-        //     'dark': 'Theme: Dark'
-        // };
+
 
         function applyTheme(theme) {
             if (theme === 'system') {
@@ -412,4 +437,5 @@
         });
     </script>
 </body>
+
 </html>
