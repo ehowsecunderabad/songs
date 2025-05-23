@@ -54,22 +54,24 @@
             color: var(--text-main);
         }
         #sidebar {
-            width: 250px;
-            padding: 15px;
-            border-right: 1px solid var(--border);
-            overflow-y: auto;
-            background-color: var(--bg-sidebar);
-            transition: transform 0.3s ease;
-            position: relative;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
         }
         #sidebar h2 {
             margin-top: 0;
             color: var(--text-heading);
         }
+        .song-list-container {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
         #song-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
+            flex: 1 1 auto;
+            max-height: none;
+            overflow-y: auto;
         }
         #song-list li {
             padding: 10px 0;
@@ -115,7 +117,7 @@
         }
         .scroll-overlay-btn {
             position: absolute;
-            right: 16px;
+            right: 8px;
             z-index: 10;
             background: var(--btn-bg);
             color: var(--btn-text);
@@ -131,10 +133,15 @@
             transition: opacity 0.2s;
         }
         #scroll-bottom-btn {
-            bottom: 24px;
+            bottom: 8px;
         }
         #scroll-top-btn {
-            top: 24px;
+            top: 8px;
+        }
+        #theme-toggle-btn {
+            margin-top: 0;
+            width: 100%;
+            flex-shrink: 0;
         }
         /* --- Mobile Responsive Styles --- */
         @media (max-width: 600px) {
@@ -147,6 +154,10 @@
                 border-right: none;
                 border-bottom: 1px solid #ccc;
                 padding: 10px;
+                height: auto;
+            }
+            .song-list-container {
+                max-height: 50vh;
             }
             #main-pane {
                 padding: 10px;
@@ -175,9 +186,11 @@
 <body>
     <div id="sidebar">
         <h2>Melodies Of Worship</h2>
-        <ul id="song-list"></ul>
-        <button id="scroll-bottom-btn" type="button" class="scroll-overlay-btn" title="Go to bottom">↓</button>
-        <button id="scroll-top-btn" type="button" class="scroll-overlay-btn" title="Go to top">↑</button>
+        <div class="song-list-container">
+            <ul id="song-list"></ul>
+            <button id="scroll-bottom-btn" type="button" class="scroll-overlay-btn" aria-label="Go to bottom" title="Go to bottom">↓</button>
+            <button id="scroll-top-btn" type="button" class="scroll-overlay-btn" aria-label="Go to top" title="Go to top">↑</button>
+        </div>
         <button id="theme-toggle-btn" type="button" style="font-weight:bold; padding:6px 16px; border-radius:4px; border:1px solid var(--border); background:var(--bg-sidebar); color:var(--text-main); cursor:pointer; margin-top:16px; width:100%;">
             Theme: System Default
         </button>
@@ -393,9 +406,9 @@
         // Initial call to fetch the song list when the page loads
         document.addEventListener('DOMContentLoaded', () => {
             fetchSongList();
-            // Hide back button initially
             backBtn.classList.add('mobile-hide');
             loadTheme();
+            setTimeout(updateScrollButtons, 300);
         });
     </script>
 </body>
