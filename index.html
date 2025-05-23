@@ -300,7 +300,7 @@
         // Function to fetch and display the content of a song
         async function displaySongContent(url) {
             try {
-                songContentElement.textContent = 'Loading song...'; // Show loading message
+                songContentElement.textContent = 'Loading song...';
                 const response = await fetch(url);
 
                 if (!response.ok) {
@@ -308,11 +308,12 @@
                 }
 
                 const content = await response.text();
-                songContentElement.textContent = content; // Display the raw text content
+                songContentElement.textContent = content;
 
-                // On mobile, hide sidebar and show back button
+                // On mobile, hide sidebar and show main pane
                 if (isMobile()) {
                     sidebar.classList.add('mobile-hide');
+                    mainPane.classList.remove('mobile-hide');
                     backBtn.classList.remove('mobile-hide');
                 } else {
                     backBtn.classList.add('mobile-hide');
@@ -333,6 +334,7 @@
         backBtn.addEventListener('click', () => {
             if (isMobile()) {
                 sidebar.classList.remove('mobile-hide');
+                mainPane.classList.add('mobile-hide');
                 backBtn.classList.add('mobile-hide');
                 songContentElement.textContent = 'Select a song from the list to view its content.';
             }
@@ -379,18 +381,33 @@
             setTimeout(updateScrollButtons, 300); // Wait for song list to render
         });
 
+        // On initial load, hide main pane on mobile
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchSongList();
+            backBtn.classList.add('mobile-hide');
+            loadTheme();
+            setTimeout(updateScrollButtons, 300);
+
+            if (isMobile()) {
+                mainPane.classList.add('mobile-hide');
+            }
+        });
+
         // On resize, reset view if needed
         window.addEventListener('resize', () => {
             if (!isMobile()) {
                 sidebar.classList.remove('mobile-hide');
+                mainPane.classList.remove('mobile-hide');
                 backBtn.classList.add('mobile-hide');
             } else {
-                // If main pane is showing, keep sidebar hidden if a song is loaded
+                // If a song is loaded, show main pane, else show sidebar
                 if (songContentElement.textContent !== 'Select a song from the list to view its content.') {
                     sidebar.classList.add('mobile-hide');
+                    mainPane.classList.remove('mobile-hide');
                     backBtn.classList.remove('mobile-hide');
                 } else {
                     sidebar.classList.remove('mobile-hide');
+                    mainPane.classList.add('mobile-hide');
                     backBtn.classList.add('mobile-hide');
                 }
             }
