@@ -17,23 +17,53 @@
             unicode-range: U+0C00-0C7F; /* Telugu Unicode block */
         }
 
+        /* Add these styles inside your <style> tag, before the @media section */
+
+        /* Light Theme (default) */
+        :root {
+            --bg-main: #fff;
+            --bg-sidebar: #f4f4f4;
+            --bg-hover: #e0e0e0;
+            --text-main: #222;
+            --text-heading: #333;
+            --border: #ccc;
+            --border-list: #eee;
+            --btn-bg: #1976d2;
+            --btn-text: #fff;
+        }
+
+        /* Dark Theme */
+        [data-theme="dark"] {
+            --bg-main: #23272e;
+            --bg-sidebar: #2c313a;
+            --bg-hover: #353a42;
+            --text-main: #e0e0e0;
+            --text-heading: #fafafa;
+            --border: #444a54;
+            --border-list: #3a3f47;
+            --btn-bg: #3b5ba9;
+            --btn-text: #fff;
+        }
+
         body {
             font-family: 'EnglishFont', 'TeluguFont', Arial, 'Noto Sans Telugu', sans-serif;
             display: flex;
             margin: 0;
             height: 100vh;
+            background: var(--bg-main);
+            color: var(--text-main);
         }
         #sidebar {
             width: 250px;
             padding: 15px;
-            border-right: 1px solid #ccc;
+            border-right: 1px solid var(--border);
             overflow-y: auto;
-            background-color: #f4f4f4;
+            background-color: var(--bg-sidebar);
             transition: transform 0.3s ease;
         }
         #sidebar h2 {
             margin-top: 0;
-            color: #333;
+            color: var(--text-heading);
         }
         #song-list {
             list-style: none;
@@ -43,21 +73,21 @@
         #song-list li {
             padding: 10px 0;
             cursor: pointer;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--border-list);
             transition: background-color 0.2s ease;
         }
         #song-list li:last-child {
             border-bottom: none;
         }
         #song-list li:hover {
-            background-color: #e0e0e0;
+            background-color: var(--bg-hover);
         }
         #main-pane {
             flex-grow: 1;
             padding: 15px;
             overflow-y: auto;
             white-space: pre-wrap;
-            background-color: #fff;
+            background-color: var(--bg-main);
             box-sizing: border-box;
             position: relative;
         }
@@ -66,11 +96,12 @@
             font-family: 'Courier New', Courier, monospace;
             font-size: 1em;
             line-height: 1.5;
-            color: #222;
+            color: var(--text-main);
+            background: none;
             white-space: pre-wrap; /* Add this line */
         }
         .error {
-            color: red;
+            color: #ff6b6b;
             font-weight: bold;
         }
         /* Hide elements utility */
@@ -106,8 +137,8 @@
             #back-btn {
                 display: block;
                 margin-bottom: 10px;
-                background: #1976d2;
-                color: #fff;
+                background: var(--btn-bg);
+                color: var(--btn-text);
                 border: none;
                 padding: 8px 16px;
                 border-radius: 4px;
@@ -120,8 +151,10 @@
 <body>
     <div id="sidebar">
         <h2>Songs</h2>
-        <ul id="song-list">
-            </ul>
+        <ul id="song-list"></ul>
+        <button id="theme-toggle-btn" type="button" style="font-weight:bold; padding:6px 16px; border-radius:4px; border:1px solid var(--border); background:var(--bg-sidebar); color:var(--text-main); cursor:pointer; margin-top:16px; width:100%;">
+            Theme: System Default
+        </button>
     </div>
     <div id="main-pane">
         <button id="back-btn" type="button">← Back to list</button>
@@ -139,6 +172,13 @@
         const sidebar = document.getElementById('sidebar');
         const mainPane = document.getElementById('main-pane');
         const backBtn = document.getElementById('back-btn');
+        const themeToggleBtn = document.getElementById('theme-toggle-btn');
+        const themeModes = ['system', 'light', 'dark'];
+        const themeLabels = {
+            'system': 'Theme: System Default',
+            'light': 'Theme: Light',
+            'dark': 'Theme: Dark'
+        };
 
         // Helper to check if mobile
         function isMobile() {
@@ -242,11 +282,51 @@
             }
         });
 
+        // Theme switching logic
+        // const themeToggleBtn = document.getElementById('theme-toggle-btn');
+        // const themeModes = ['system', 'light', 'dark'];
+        // const themeLabels = {
+        //     'system': 'Theme: System Default',
+        //     'light': 'Theme: Light',
+        //     'dark': 'Theme: Dark'
+        // };
+
+        function applyTheme(theme) {
+            if (theme === 'system') {
+                document.documentElement.removeAttribute('data-theme');
+            } else {
+                document.documentElement.setAttribute('data-theme', theme);
+            }
+            themeToggleBtn.textContent = themeLabels[theme];
+        }
+
+        function loadTheme() {
+            const saved = localStorage.getItem('theme') || 'system';
+            applyTheme(saved);
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            let current = localStorage.getItem('theme') || 'system';
+            let idx = themeModes.indexOf(current);
+            let next = themeModes[(idx + 1) % themeModes.length];
+            localStorage.setItem('theme', next);
+            applyTheme(next);
+        });
+
+        // React to system theme changes if "system" is selected
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            const current = localStorage.getItem('theme') || 'system';
+            if (current === 'system') {
+                applyTheme('system');
+            }
+        });
+
         // Initial call to fetch the song list when the page loads
         document.addEventListener('DOMContentLoaded', () => {
             fetchSongList();
             // Hide back button initially
             backBtn.classList.add('mobile-hide');
+            loadTheme();
         });
     </script>
 </body>
