@@ -113,18 +113,12 @@
             line-height: 1.5;
             color: var(--text-main);
             background: none;
-            white-space: pre-wrap;
-            /* Add this line */
+            white-space: pre-wrap; /* Ensures long lines wrap within the pre tag */
         }
 
         .error {
             color: #ff6b6b;
             font-weight: bold;
-        }
-
-        /* Hide elements utility */
-        .mobile-hide {
-            display: none !important;
         }
 
         /* Hide back button on desktop */
@@ -159,6 +153,15 @@
         }
 
         #theme-toggle-btn {
+            /* Styles moved from inline */
+            font-weight: bold;
+            padding: 6px 16px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            background: var(--bg-sidebar);
+            color: var(--text-main);
+            cursor: pointer;
+            /* Existing styles */
             margin-top: 0;
             width: 100%;
             flex-shrink: 0;
@@ -169,17 +172,15 @@
         @media (max-width: 600px) {
             body {
                 flex-direction: column;
-                height: auto;
             }
 
             #sidebar {
                 width: 100%;
                 border-right: none;
-                border-bottom: 1px solid #ccc;
+                border-bottom: 1px solid var(--border);
                 padding: 10px;
                 height: 100vh;
                 /* Ensure sidebar fills the screen */
-                min-height: 100vh;
                 display: flex;
                 flex-direction: column;
             }
@@ -221,14 +222,13 @@
             <button id="scroll-top-btn" type="button" class="scroll-overlay-btn" aria-label="Go to top"
                 title="Go to top">↑</button>
         </div>
-        <button id="theme-toggle-btn" type="button"
-            style="font-weight:bold; padding:6px 16px; border-radius:4px; border:1px solid var(--border); background:var(--bg-sidebar); color:var(--text-main); cursor:pointer; margin-top:0; width:100%;">
+        <button id="theme-toggle-btn" type="button">
             Theme: System Default
         </button>
     </div>
     <div id="main-pane">
         <button id="back-btn" type="button">← Back to list</button>
-        <pre id="song-content">Select a song from the list to view its content.</pre>
+        <pre id="song-content"></pre> <!-- Initial content set by JS -->
     </div>
 
     <script>
@@ -251,6 +251,9 @@
             'light': 'Theme: Light',
             'dark': 'Theme: Dark'
         };
+
+        const INITIAL_SONG_CONTENT_MESSAGE = 'Select a song from the list to view its content.';
+        let isSongViewActiveOnMobile = false; // Tracks if song content is the main view on mobile
 
         // Helper to check if mobile
         function isMobile() {
@@ -289,15 +292,17 @@
                     listItem.addEventListener('click', () => displaySongContent(listItem.dataset.downloadUrl));
                     songListElement.appendChild(listItem);
                 });
-                updateScrollButtons();
             } catch (error) {
                 console.error('Error fetching song list:', error);
                 songListElement.innerHTML = `<li class="error">Error loading song list: ${error.message}. Please check your GitHub username, repository name, and folder path.</li>`;
+            } finally {
+                updateScrollButtons(); // Ensure scroll buttons are updated after list is populated or error shown
             }
         }
 
         // Function to fetch and display the content of a song
         async function displaySongContent(url) {
+            songContentElement.classList.remove('error'); // Clear previous error state
             try {
                 songContentElement.textContent = 'Loading song...';
                 const response = await fetch(url);
@@ -309,34 +314,45 @@
                 const content = await response.text();
                 songContentElement.textContent = content;
 
-                // On mobile, hide sidebar and show main pane
-                if (isMobile()) {
-                    sidebar.classList.add('mobile-hide');
-                    mainPane.classList.remove('mobile-hide');
-                    backBtn.classList.remove('mobile-hide');
-                } else {
-                    backBtn.classList.add('mobile-hide');
-                }
+                isSongViewActiveOnMobile = true;
+                updateAppView();
             } catch (error) {
                 console.error('Error displaying song content:', error);
                 songContentElement.textContent = `Error loading song: ${error.message}`;
                 songContentElement.classList.add('error');
-            } finally {
-                // Remove error class if it was added previously
-                if (songContentElement.classList.contains('error')) {
-                    songContentElement.classList.remove('error');
-                }
             }
         }
 
+        // Centralized function to update the view based on screen size and song display state
+        function updateAppView() {
+            const mobile = isMobile();
+
+            if (mobile) {
+                if (isSongViewActiveOnMobile) {
+                    sidebar.style.display = 'none';
+                    mainPane.style.display = 'block';
+                    mainPane.style.height = '100vh'; // Ensure main pane takes full height
+                    backBtn.style.display = 'block';
+                } else { // List view on mobile
+                    sidebar.style.display = 'flex'; // #sidebar is a flex container
+                    mainPane.style.display = 'none';
+                    backBtn.style.display = 'none';
+                }
+            } else { // Desktop view
+                sidebar.style.display = 'flex';
+                mainPane.style.display = 'block';
+                mainPane.style.height = ''; // Reset height, let CSS (flex-grow) handle it
+                backBtn.style.display = 'none';
+            }
+        }
+
+
         // Back button handler for mobile
         backBtn.addEventListener('click', () => {
-            if (isMobile()) {
-                sidebar.classList.remove('mobile-hide');
-                mainPane.classList.add('mobile-hide');
-                backBtn.classList.add('mobile-hide');
-                songContentElement.textContent = 'Select a song from the list to view its content.';
-            }
+            // This button is only visible on mobile when a song is active
+            isSongViewActiveOnMobile = false;
+            songContentElement.textContent = INITIAL_SONG_CONTENT_MESSAGE;
+            updateAppView();
         });
 
         // Scroll to bottom
@@ -376,43 +392,17 @@
 
         // Update buttons on scroll and after loading songs
         songListElement.addEventListener('scroll', updateScrollButtons);
-        document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(updateScrollButtons, 300); // Wait for song list to render
-        });
 
-        // On initial load, hide main pane on mobile
         document.addEventListener('DOMContentLoaded', () => {
+            songContentElement.textContent = INITIAL_SONG_CONTENT_MESSAGE;
             fetchSongList();
-            backBtn.classList.add('mobile-hide');
             loadTheme();
-            setTimeout(updateScrollButtons, 300);
-
-            if (isMobile()) {
-                mainPane.classList.add('mobile-hide');
-            }
+            updateAppView(); // Set initial view based on screen size
         });
 
         // On resize, reset view if needed
-        window.addEventListener('resize', () => {
-            if (!isMobile()) {
-                sidebar.classList.remove('mobile-hide');
-                mainPane.classList.remove('mobile-hide');
-                backBtn.classList.add('mobile-hide');
-            } else {
-                // If a song is loaded, show main pane, else show sidebar
-                if (songContentElement.textContent !== 'Select a song from the list to view its content.') {
-                    sidebar.classList.add('mobile-hide');
-                    mainPane.classList.remove('mobile-hide');
-                    backBtn.classList.remove('mobile-hide');
-                } else {
-                    sidebar.classList.remove('mobile-hide');
-                    mainPane.classList.add('mobile-hide');
-                    backBtn.classList.add('mobile-hide');
-                }
-            }
-        });
-
-
+        window.addEventListener('resize', updateAppView);
+        
 
         function applyTheme(theme) {
             if (theme === 'system') {
@@ -442,14 +432,6 @@
             if (current === 'system') {
                 applyTheme('system');
             }
-        });
-
-        // Initial call to fetch the song list when the page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchSongList();
-            backBtn.classList.add('mobile-hide');
-            loadTheme();
-            setTimeout(updateScrollButtons, 300);
         });
     </script>
 </body>
