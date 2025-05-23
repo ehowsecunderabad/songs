@@ -5,8 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Melodies Of Worship</title>
     <style>
+        @font-face {
+            font-family: 'EnglishFont';
+            src: local('Arial'), local('Helvetica'), sans-serif;
+            unicode-range: U+0000-00FF; /* Basic Latin */
+        }
+
+        @font-face {
+            font-family: 'TeluguFont';
+            src: local('Noto Sans Telugu'), local('Gautami'), sans-serif;
+            unicode-range: U+0C00-0C7F; /* Telugu Unicode block */
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'EnglishFont', 'TeluguFont', Arial, 'Noto Sans Telugu', sans-serif;
             display: flex;
             margin: 0;
             height: 100vh;
@@ -55,6 +67,7 @@
             font-size: 1em;
             line-height: 1.5;
             color: #222;
+            white-space: pre-wrap; /* Add this line */
         }
         .error {
             color: red;
