@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Song Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            margin: 0;
+            height: 100vh;
+        }
+        #sidebar {
+            width: 250px;
+            padding: 15px;
+            border-right: 1px solid #ccc;
+            overflow-y: auto;
+            background-color: #f4f4f4;
+            transition: transform 0.3s ease;
+        }
+        #sidebar h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        #song-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        #song-list li {
+            padding: 10px 0;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s ease;
+        }
+        #song-list li:last-child {
+            border-bottom: none;
+        }
+        #song-list li:hover {
+            background-color: #e0e0e0;
+        }
+        #main-pane {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            background-color: #fff;
+            box-sizing: border-box;
+            position: relative;
+        }
+        #main-pane pre {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1em;
+            line-height: 1.5;
+            color: #222;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        /* Hide elements utility */
+        .mobile-hide {
+            display: none !important;
+        }
+        /* Hide back button on desktop */
+        #back-btn {
+            display: none;
+        }
+        /* --- Mobile Responsive Styles --- */
+        @media (max-width: 600px) {
+            body {
+                flex-direction: column;
+                height: auto;
+            }
+            #sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #ccc;
+                padding: 10px;
+            }
+            #main-pane {
+                padding: 10px;
+            }
+            #song-list li {
+                padding: 8px 0;
+                font-size: 1em;
+            }
+            #main-pane pre {
+                font-size: 0.95em;
+            }
+            #back-btn {
+                display: block;
+                margin-bottom: 10px;
+                background: #1976d2;
+                color: #fff;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-size: 1em;
+                cursor: pointer;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar">
+        <h2>Songs</h2>
+        <ul id="song-list">
+            </ul>
+    </div>
+    <div id="main-pane">
+        <button id="back-btn" type="button">← Back to list</button>
+        <pre id="song-content">Select a song from the list to view its content.</pre>
+    </div>
+
+    <script>
+        // Replace with your GitHub repository details
+        const GITHUB_USERNAME = 'ehowsecunderabad'; // e.g., 'octocat'
+        const REPOSITORY_NAME = 'songs'; // e.g., 'my-songs'
+        const FOLDER_PATH = ''; // e.g., 'songs' or leave empty for root
+
+        const songListElement = document.getElementById('song-list');
+        const songContentElement = document.getElementById('song-content');
+        const sidebar = document.getElementById('sidebar');
+        const mainPane = document.getElementById('main-pane');
+        const backBtn = document.getElementById('back-btn');
+
+        // Helper to check if mobile
+        function isMobile() {
+            return window.innerWidth <= 600;
+        }
+
+        // Function to fetch the list of files (songs) from GitHub API
+        async function fetchSongList() {
+            try {
+                let apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${REPOSITORY_NAME}/contents`;
+                if (FOLDER_PATH) {
+                    apiUrl += `/${FOLDER_PATH}`;
+                }
+
+                const response = await fetch(apiUrl);
+
+                if (!response.ok) {
+                    throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+                }
+
+                const files = await response.json();
+
+                // Filter for .txt files and populate the list
+                songListElement.innerHTML = ''; // Clear existing list
+                const txtFiles = files.filter(file => file.type === 'file' && file.name.endsWith('.txt'));
+
+                if (txtFiles.length === 0) {
+                    songListElement.innerHTML = '<li>No .txt songs found in this repository/folder.</li>';
+                    return;
+                }
+
+                txtFiles.forEach(file => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = file.name.replace('.txt', ''); // Display without .txt extension
+                    listItem.dataset.downloadUrl = file.download_url; // Store the raw file URL
+                    listItem.addEventListener('click', () => displaySongContent(listItem.dataset.downloadUrl));
+                    songListElement.appendChild(listItem);
+                });
+
+            } catch (error) {
+                console.error('Error fetching song list:', error);
+                songListElement.innerHTML = `<li class="error">Error loading song list: ${error.message}. Please check your GitHub username, repository name, and folder path.</li>`;
+            }
+        }
+
+        // Function to fetch and display the content of a song
+        async function displaySongContent(url) {
+            try {
+                songContentElement.textContent = 'Loading song...'; // Show loading message
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    throw new Error(`Failed to load song content: ${response.status} ${response.statusText}`);
+                }
+
+                const content = await response.text();
+                songContentElement.textContent = content; // Display the raw text content
+
+                // On mobile, hide sidebar and show back button
+                if (isMobile()) {
+                    sidebar.classList.add('mobile-hide');
+                    backBtn.classList.remove('mobile-hide');
+                } else {
+                    backBtn.classList.add('mobile-hide');
+                }
+            } catch (error) {
+                console.error('Error displaying song content:', error);
+                songContentElement.textContent = `Error loading song: ${error.message}`;
+                songContentElement.classList.add('error');
+            } finally {
+                // Remove error class if it was added previously
+                if (songContentElement.classList.contains('error')) {
+                    songContentElement.classList.remove('error');
+                }
+            }
+        }
+
+        // Back button handler for mobile
+        backBtn.addEventListener('click', () => {
+            if (isMobile()) {
+                sidebar.classList.remove('mobile-hide');
+                backBtn.classList.add('mobile-hide');
+                songContentElement.textContent = 'Select a song from the list to view its content.';
+            }
+        });
+
+        // On resize, reset view if needed
+        window.addEventListener('resize', () => {
+            if (!isMobile()) {
+                sidebar.classList.remove('mobile-hide');
+                backBtn.classList.add('mobile-hide');
+            } else {
+                // If main pane is showing, keep sidebar hidden if a song is loaded
+                if (songContentElement.textContent !== 'Select a song from the list to view its content.') {
+                    sidebar.classList.add('mobile-hide');
+                    backBtn.classList.remove('mobile-hide');
+                } else {
+                    sidebar.classList.remove('mobile-hide');
+                    backBtn.classList.add('mobile-hide');
+                }
+            }
+        });
+
+        // Initial call to fetch the song list when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchSongList();
+            // Hide back button initially
+            backBtn.classList.add('mobile-hide');
+        });
+    </script>
+</body>
+</html>
