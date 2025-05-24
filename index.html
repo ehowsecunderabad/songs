@@ -59,8 +59,10 @@
             box-sizing: border-box; /* Ensure padding/border are within height/width */
         }
         #sidebar h2 {
-            margin-top: 0;
+            margin: 32px 0 20px 0;         /* Remove top/left margin, add space below */
             color: var(--text-heading);
+            text-align: center;          /* Center text horizontally */
+            align-self: center;          /* Center the h2 in the flex column */
         }
         .song-list-container {
             flex: 1 1 auto;
