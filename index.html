@@ -1,9 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Melodies Of Worship</title>
+    <!-- Google Fonts: Noto Sans Telugu and Roboto example -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu&family=Roboto:wght@400;700&display=swap"
+        rel="stylesheet">
     <style>
         @font-face {
             font-family: 'EnglishFont';
@@ -11,14 +15,17 @@
             unicode-range: U+0000-00FF;
             /* Basic Latin */
         }
+
         @font-face {
             font-family: 'TeluguFont';
             src: local('Noto Sans Telugu'), local('Gautami'), sans-serif;
             unicode-range: U+0C00-0C7F;
             /* Telugu Unicode block */
         }
+
         /* Add these styles inside your <style> tag, before the @media section */
         /* Light Theme (default) */
+
         :root {
             --bg-main: #fff;
             --bg-sidebar: #f4f4f4;
@@ -30,6 +37,7 @@
             --btn-bg: #1976d2;
             --btn-text: #fff;
         }
+
         /* Dark Theme */
         [data-theme="dark"] {
             --bg-main: #23272e;
@@ -42,36 +50,49 @@
             --btn-bg: #3b5ba9;
             --btn-text: #fff;
         }
+
         body {
-            font-family: 'EnglishFont', 'TeluguFont', Arial, 'Noto Sans Telugu', sans-serif;
+            font-family: 'Roboto', 'Noto Sans Telugu', Arial, sans-serif;
             display: flex;
             margin: 0;
             height: 100vh;
             background: var(--bg-main);
             color: var(--text-main);
         }
+
         #sidebar {
             display: flex;
             flex-direction: column;
             height: 100vh;
-            box-sizing: border-box; /* Ensure padding/border are within height/width */
+            box-sizing: border-box;
+            /* Ensure padding/border are within height/width */
         }
+
         #sidebar h2 {
-            margin-top: 0;
+            margin: 1px auto 1px auto;
+            /* Remove top/left margin, add space below */
             color: var(--text-heading);
+            text-align: center;
+            /* Center text horizontally */
+            align-self: center;
+            /* Center the h2 in the flex column */
         }
+
         .song-list-container {
             flex: 1 1 auto;
             display: flex;
             flex-direction: column;
             min-height: 0;
-            position: relative; /* For positioning scroll buttons */
+            position: relative;
+            /* For positioning scroll buttons */
         }
+
         #song-list {
             flex: 1 1 auto;
             max-height: none;
             overflow-y: auto;
         }
+
         #song-list li {
             list-style: none;
             padding: 10px 0;
@@ -79,12 +100,15 @@
             border-bottom: 1px solid var(--border-list);
             transition: background-color 0.2s ease;
         }
+
         #song-list li:last-child {
             border-bottom: none;
         }
+
         #song-list li:hover {
             background-color: var(--bg-hover);
         }
+
         #main-pane {
             flex-grow: 1;
             padding: 15px;
@@ -93,23 +117,28 @@
             background-color: var(--bg-main);
             box-sizing: border-box;
         }
+
         #main-pane pre {
             margin: 0;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'Noto Sans Telugu', Courier, monospace;
             font-size: 1em;
             line-height: 1.5;
             color: var(--text-main);
             background: none;
-            white-space: pre-wrap; /* Ensures long lines wrap within the pre tag */
+            white-space: pre-wrap;
+            /* Ensures long lines wrap within the pre tag */
         }
+
         .error {
             color: #ff6b6b;
             font-weight: bold;
         }
+
         /* Hide back button on desktop */
         #back-btn {
             display: none;
         }
+
         .scroll-overlay-btn {
             position: absolute;
             right: 8px;
@@ -127,12 +156,15 @@
             display: none;
             transition: opacity 0.2s;
         }
+
         #scroll-bottom-btn {
             bottom: 8px;
         }
+
         #scroll-top-btn {
             top: 8px;
         }
+
         #theme-toggle-btn {
             /* Styles moved from inline */
             font-weight: bold;
@@ -143,15 +175,18 @@
             color: var(--text-main);
             cursor: pointer;
             /* Existing styles */
- margin: 0; /* Remove margin */
+            margin: 0;
+            /* Remove margin */
             flex-shrink: 0;
             box-sizing: border-box;
         }
+
         /* --- Mobile Responsive Styles --- */
         @media (max-width: 600px) {
             body {
                 flex-direction: column;
             }
+
             #sidebar {
                 width: 100%;
                 border-right: none;
@@ -162,6 +197,7 @@
                 display: flex;
                 flex-direction: column;
             }
+
             .song-list-container {
                 flex: 1 1 auto;
                 /* Take all available space above theme button */
@@ -171,21 +207,25 @@
                 max-height: none;
                 /* Remove max-height restriction */
             }
+
             #song-list {
                 flex: 1 1 auto;
                 overflow-y: auto;
                 max-height: none;
                 list-style: none;
-                padding-left: 0; 
+                padding-left: 0;
             }
+
             #theme-toggle-btn {
- margin: 0; /* Remove margin */
+                margin: 0;
+                /* Remove margin */
                 flex-shrink: 0;
                 box-sizing: border-box;
             }
         }
     </style>
 </head>
+
 <body>
     <div id="sidebar">
         <h2>Melodies Of Worship</h2>
@@ -201,6 +241,11 @@
         </button>
     </div>
     <div id="main-pane">
+        <div id="text-size-controls"
+            style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <button id="decrease-text-btn" type="button" title="Decrease text size" aria-label="A-">A-</button>
+            <button id="increase-text-btn" type="button" title="Increase text size" aria-label="A+">A+</button>
+        </div>
         <button id="back-btn" type="button">← Back to list</button>
         <pre id="song-content"></pre> <!-- Initial content set by JS -->
     </div>
@@ -217,6 +262,8 @@
         const themeToggleBtn = document.getElementById('theme-toggle-btn');
         const scrollBottomBtn = document.getElementById('scroll-bottom-btn');
         const scrollTopBtn = document.getElementById('scroll-top-btn');
+        const increaseTextBtn = document.getElementById('increase-text-btn');
+        const decreaseTextBtn = document.getElementById('decrease-text-btn');
         const themeModes = ['system', 'light', 'dark'];
         const themeLabels = {
             'system': 'Theme: System Default',
@@ -225,10 +272,13 @@
         };
         const INITIAL_SONG_CONTENT_MESSAGE = 'Select a song from the list to view its content.';
         let isSongViewActiveOnMobile = false; // Tracks if song content is the main view on mobile
+        let currentFontSize = 1; // em
+
         // Helper to check if mobile
         function isMobile() {
             return window.innerWidth <= 600;
         }
+
         // Function to fetch the list of files (songs) from GitHub API
         async function fetchSongList() {
             try {
@@ -262,6 +312,7 @@
                 updateScrollButtons(); // Ensure scroll buttons are updated after list is populated or error shown
             }
         }
+
         // Function to fetch and display the content of a song
         async function displaySongContent(url) {
             songContentElement.classList.remove('error'); // Clear previous error state
@@ -281,6 +332,7 @@
                 songContentElement.classList.add('error');
             }
         }
+
         // Centralized function to update the view based on screen size and song display state
         function updateAppView() {
             const mobile = isMobile();
@@ -352,7 +404,7 @@
         });
         // On resize, reset view if needed
         window.addEventListener('resize', updateAppView);
-        
+
         function applyTheme(theme) {
             if (theme === 'system') {
                 // Check system preference and apply accordingly
@@ -384,6 +436,27 @@
                 applyTheme('system');
             }
         });
+
+        function updateFontSize() {
+            songContentElement.style.fontSize = currentFontSize + 'em';
+        }
+
+        increaseTextBtn.addEventListener('click', () => {
+            if (currentFontSize < 2.5) {
+                currentFontSize += 0.1;
+                updateFontSize();
+            }
+        });
+        decreaseTextBtn.addEventListener('click', () => {
+            if (currentFontSize > 0.7) {
+                currentFontSize -= 0.1;
+                updateFontSize();
+            }
+        });
+
+        // Initialize font size on load
+        document.addEventListener('DOMContentLoaded', updateFontSize);
     </script>
 </body>
+
 </html>
