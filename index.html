@@ -1,118 +1,235 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Song Viewer</title>
+    <title>Melodies Of Worship</title>
     <style>
+        @font-face {
+            font-family: 'EnglishFont';
+            src: local('Arial'), local('Helvetica'), sans-serif;
+            unicode-range: U+0000-00FF;
+            /* Basic Latin */
+        }
+
+        @font-face {
+            font-family: 'TeluguFont';
+            src: local('Noto Sans Telugu'), local('Gautami'), sans-serif;
+            unicode-range: U+0C00-0C7F;
+            /* Telugu Unicode block */
+        }
+
+        /* Add these styles inside your <style> tag, before the @media section */
+
+        /* Light Theme (default) */
+        :root {
+            --bg-main: #fff;
+            --bg-sidebar: #f4f4f4;
+            --bg-hover: #e0e0e0;
+            --text-main: #222;
+            --text-heading: #333;
+            --border: #ccc;
+            --border-list: #eee;
+            --btn-bg: #1976d2;
+            --btn-text: #fff;
+        }
+
+        /* Dark Theme */
+        [data-theme="dark"] {
+            --bg-main: #23272e;
+            --bg-sidebar: #2c313a;
+            --bg-hover: #353a42;
+            --text-main: #e0e0e0;
+            --text-heading: #fafafa;
+            --border: #444a54;
+            --border-list: #3a3f47;
+            --btn-bg: #3b5ba9;
+            --btn-text: #fff;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'EnglishFont', 'TeluguFont', Arial, 'Noto Sans Telugu', sans-serif;
             display: flex;
             margin: 0;
             height: 100vh;
+            background: var(--bg-main);
+            color: var(--text-main);
         }
+
         #sidebar {
-            width: 250px;
-            padding: 15px;
-            border-right: 1px solid #ccc;
-            overflow-y: auto;
-            background-color: #f4f4f4;
-            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            box-sizing: border-box; /* Ensure padding/border are within height/width */
         }
+
         #sidebar h2 {
             margin-top: 0;
-            color: #333;
+            color: var(--text-heading);
         }
+
+        .song-list-container {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            position: relative; /* For positioning scroll buttons */
+        }
+
         #song-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
+            flex: 1 1 auto;
+            max-height: none;
+            overflow-y: auto;
         }
+
         #song-list li {
+            list-style: none;
             padding: 10px 0;
             cursor: pointer;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--border-list);
             transition: background-color 0.2s ease;
         }
+
         #song-list li:last-child {
             border-bottom: none;
         }
+
         #song-list li:hover {
-            background-color: #e0e0e0;
+            background-color: var(--bg-hover);
         }
+
         #main-pane {
             flex-grow: 1;
             padding: 15px;
             overflow-y: auto;
             white-space: pre-wrap;
-            background-color: #fff;
+            background-color: var(--bg-main);
             box-sizing: border-box;
-            position: relative;
         }
+
         #main-pane pre {
             margin: 0;
             font-family: 'Courier New', Courier, monospace;
             font-size: 1em;
             line-height: 1.5;
-            color: #222;
+            color: var(--text-main);
+            background: none;
+            white-space: pre-wrap; /* Ensures long lines wrap within the pre tag */
         }
+
         .error {
-            color: red;
+            color: #ff6b6b;
             font-weight: bold;
         }
-        /* Hide elements utility */
-        .mobile-hide {
-            display: none !important;
-        }
+
         /* Hide back button on desktop */
         #back-btn {
             display: none;
         }
+
+        .scroll-overlay-btn {
+            position: absolute;
+            right: 8px;
+            z-index: 10;
+            background: var(--btn-bg);
+            color: var(--btn-text);
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            font-size: 1.5em;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+            cursor: pointer;
+            opacity: 0.85;
+            display: none;
+            transition: opacity 0.2s;
+        }
+
+        #scroll-bottom-btn {
+            bottom: 8px;
+        }
+
+        #scroll-top-btn {
+            top: 8px;
+        }
+
+        #theme-toggle-btn {
+            /* Styles moved from inline */
+            font-weight: bold;
+            padding: 6px 16px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            background: var(--bg-sidebar);
+            color: var(--text-main);
+            cursor: pointer;
+            /* Existing styles */
+ margin: 0; /* Remove margin */
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+
         /* --- Mobile Responsive Styles --- */
         @media (max-width: 600px) {
             body {
                 flex-direction: column;
-                height: auto;
             }
+
             #sidebar {
                 width: 100%;
                 border-right: none;
-                border-bottom: 1px solid #ccc;
+                border-bottom: 1px solid var(--border);
                 padding: 10px;
+                height: 100vh;
+                /* Ensure sidebar fills the screen */
+                display: flex;
+                flex-direction: column;
             }
-            #main-pane {
-                padding: 10px;
+
+            .song-list-container {
+                flex: 1 1 auto;
+                /* Take all available space above theme button */
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+                max-height: none;
+                /* Remove max-height restriction */
             }
-            #song-list li {
-                padding: 8px 0;
-                font-size: 1em;
+
+            #song-list {
+                flex: 1 1 auto;
+                overflow-y: auto;
+                max-height: none;
+                list-style: none;
+                padding-left: 0; 
             }
-            #main-pane pre {
-                font-size: 0.95em;
-            }
-            #back-btn {
-                display: block;
-                margin-bottom: 10px;
-                background: #1976d2;
-                color: #fff;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                font-size: 1em;
-                cursor: pointer;
+
+            #theme-toggle-btn {
+ margin: 0; /* Remove margin */
+                flex-shrink: 0;
+                box-sizing: border-box;
             }
         }
     </style>
 </head>
+
 <body>
     <div id="sidebar">
-        <h2>Songs</h2>
-        <ul id="song-list">
-            </ul>
+        <h2>Melodies Of Worship</h2>
+        <div class="song-list-container">
+            <ul id="song-list"></ul>
+            <button id="scroll-bottom-btn" type="button" class="scroll-overlay-btn" aria-label="Go to bottom"
+                title="Go to bottom">↓</button>
+            <button id="scroll-top-btn" type="button" class="scroll-overlay-btn" aria-label="Go to top"
+                title="Go to top">↑</button>
+        </div>
+        <button id="theme-toggle-btn" type="button">
+            Theme: System Default
+        </button>
     </div>
     <div id="main-pane">
         <button id="back-btn" type="button">← Back to list</button>
-        <pre id="song-content">Select a song from the list to view its content.</pre>
+        <pre id="song-content"></pre> <!-- Initial content set by JS -->
     </div>
 
     <script>
@@ -126,6 +243,18 @@
         const sidebar = document.getElementById('sidebar');
         const mainPane = document.getElementById('main-pane');
         const backBtn = document.getElementById('back-btn');
+        const themeToggleBtn = document.getElementById('theme-toggle-btn');
+        const scrollBottomBtn = document.getElementById('scroll-bottom-btn');
+        const scrollTopBtn = document.getElementById('scroll-top-btn');
+        const themeModes = ['system', 'light', 'dark'];
+        const themeLabels = {
+            'system': 'Theme: System Default',
+            'light': 'Theme: Light',
+            'dark': 'Theme: Dark'
+        };
+
+        const INITIAL_SONG_CONTENT_MESSAGE = 'Select a song from the list to view its content.';
+        let isSongViewActiveOnMobile = false; // Tracks if song content is the main view on mobile
 
         // Helper to check if mobile
         function isMobile() {
@@ -164,17 +293,19 @@
                     listItem.addEventListener('click', () => displaySongContent(listItem.dataset.downloadUrl));
                     songListElement.appendChild(listItem);
                 });
-
             } catch (error) {
                 console.error('Error fetching song list:', error);
                 songListElement.innerHTML = `<li class="error">Error loading song list: ${error.message}. Please check your GitHub username, repository name, and folder path.</li>`;
+            } finally {
+                updateScrollButtons(); // Ensure scroll buttons are updated after list is populated or error shown
             }
         }
 
         // Function to fetch and display the content of a song
         async function displaySongContent(url) {
+            songContentElement.classList.remove('error'); // Clear previous error state
             try {
-                songContentElement.textContent = 'Loading song...'; // Show loading message
+                songContentElement.textContent = 'Loading song...';
                 const response = await fetch(url);
 
                 if (!response.ok) {
@@ -182,59 +313,133 @@
                 }
 
                 const content = await response.text();
-                songContentElement.textContent = content; // Display the raw text content
+                songContentElement.textContent = content;
 
-                // On mobile, hide sidebar and show back button
-                if (isMobile()) {
-                    sidebar.classList.add('mobile-hide');
-                    backBtn.classList.remove('mobile-hide');
-                } else {
-                    backBtn.classList.add('mobile-hide');
-                }
+                isSongViewActiveOnMobile = true;
+                updateAppView();
             } catch (error) {
                 console.error('Error displaying song content:', error);
                 songContentElement.textContent = `Error loading song: ${error.message}`;
                 songContentElement.classList.add('error');
-            } finally {
-                // Remove error class if it was added previously
-                if (songContentElement.classList.contains('error')) {
-                    songContentElement.classList.remove('error');
-                }
             }
         }
 
+        // Centralized function to update the view based on screen size and song display state
+        function updateAppView() {
+            const mobile = isMobile();
+
+            if (mobile) {
+                if (isSongViewActiveOnMobile) {
+                    sidebar.style.display = 'none';
+                    mainPane.style.display = 'block';
+                    mainPane.style.height = '100vh'; // Ensure main pane takes full height
+                    backBtn.style.display = 'block';
+                } else { // List view on mobile
+                    sidebar.style.display = 'flex'; // #sidebar is a flex container
+                    mainPane.style.display = 'none';
+                    backBtn.style.display = 'none';
+                }
+            } else { // Desktop view
+                sidebar.style.display = 'flex';
+                mainPane.style.display = 'block';
+                mainPane.style.height = ''; // Reset height, let CSS (flex-grow) handle it
+                backBtn.style.display = 'none';
+            }
+        }
+
+
         // Back button handler for mobile
         backBtn.addEventListener('click', () => {
-            if (isMobile()) {
-                sidebar.classList.remove('mobile-hide');
-                backBtn.classList.add('mobile-hide');
-                songContentElement.textContent = 'Select a song from the list to view its content.';
+            // This button is only visible on mobile when a song is active
+            isSongViewActiveOnMobile = false;
+            songContentElement.textContent = INITIAL_SONG_CONTENT_MESSAGE;
+            updateAppView();
+        });
+
+        // Scroll to bottom
+        scrollBottomBtn.addEventListener('click', () => {
+            songListElement.scrollTo({ top: songListElement.scrollHeight, behavior: 'smooth' });
+        });
+
+        // Scroll to top
+        scrollTopBtn.addEventListener('click', () => {
+            songListElement.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Show/hide overlay buttons based on scroll position
+        function updateScrollButtons() {
+            const el = songListElement;
+            if (el.scrollHeight <= el.clientHeight) {
+                scrollBottomBtn.style.display = 'none';
+                scrollTopBtn.style.display = 'none';
+                return;
             }
+            // At top
+            if (el.scrollTop < 10) {
+                scrollBottomBtn.style.display = 'block';
+                scrollTopBtn.style.display = 'none';
+            }
+            // At bottom
+            else if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
+                scrollBottomBtn.style.display = 'none';
+                scrollTopBtn.style.display = 'block';
+            }
+            // In between
+            else {
+                scrollBottomBtn.style.display = 'block';
+                scrollTopBtn.style.display = 'block';
+            }
+        }
+
+        // Update buttons on scroll and after loading songs
+        songListElement.addEventListener('scroll', updateScrollButtons);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            songContentElement.textContent = INITIAL_SONG_CONTENT_MESSAGE;
+            fetchSongList();
+            loadTheme();
+            updateAppView(); // Set initial view based on screen size
         });
 
         // On resize, reset view if needed
-        window.addEventListener('resize', () => {
-            if (!isMobile()) {
-                sidebar.classList.remove('mobile-hide');
-                backBtn.classList.add('mobile-hide');
-            } else {
-                // If main pane is showing, keep sidebar hidden if a song is loaded
-                if (songContentElement.textContent !== 'Select a song from the list to view its content.') {
-                    sidebar.classList.add('mobile-hide');
-                    backBtn.classList.remove('mobile-hide');
+        window.addEventListener('resize', updateAppView);
+        
+
+        function applyTheme(theme) {
+            if (theme === 'system') {
+                // Check system preference and apply accordingly
+                if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.documentElement.setAttribute('data-theme', 'dark');
                 } else {
-                    sidebar.classList.remove('mobile-hide');
-                    backBtn.classList.add('mobile-hide');
+                    document.documentElement.removeAttribute('data-theme');
                 }
+            } else {
+                document.documentElement.setAttribute('data-theme', theme);
             }
+            themeToggleBtn.textContent = themeLabels[theme];
+        }
+
+        function loadTheme() {
+            const saved = localStorage.getItem('theme') || 'system';
+            applyTheme(saved);
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            let current = localStorage.getItem('theme') || 'system';
+            let idx = themeModes.indexOf(current);
+            let next = themeModes[(idx + 1) % themeModes.length];
+            localStorage.setItem('theme', next);
+            applyTheme(next);
         });
 
-        // Initial call to fetch the song list when the page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchSongList();
-            // Hide back button initially
-            backBtn.classList.add('mobile-hide');
+        // React to system theme changes if "system" is selected
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            const current = localStorage.getItem('theme') || 'system';
+            if (current === 'system') {
+                applyTheme('system');
+            }
         });
     </script>
 </body>
+
 </html>
