@@ -215,14 +215,19 @@
             }
 
             #sidebar {
-                width: 100%;
+                width: 100vw;
+                /* Full viewport width */
+                min-width: 0;
+                /* Remove min-width restriction */
+                max-width: none;
+                /* Remove max-width restriction */
                 border-right: none;
                 border-bottom: 1px solid var(--border);
                 padding: 10px;
                 height: 100vh;
-                /* Ensure sidebar fills the screen */
                 display: flex;
                 flex-direction: column;
+                box-sizing: border-box;
             }
 
             .song-list-container {
