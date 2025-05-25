@@ -12,7 +12,7 @@
         @font-face {
             font-family: 'EnglishFont';
             src: local('Arial'), local('Helvetica'), sans-serif;
-            unicode-range: U+0000-00FF;
+            unicode-range: U+0000 -00FF;
             /* Basic Latin */
         }
 
@@ -257,8 +257,8 @@
             style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 8px;">
             <button id="presentation-mode-toggle" type="button" style="display: none;">Presentation Mode: OFF</button>
             <div id="presentation-controls" style="display: none; align-items: center; gap: 8px;">
-                <label for="display-select">Display:</label>
-                <select id="display-select"></select>
+                <!-- <label for="display-select">Display:</label>
+                <select id="display-select"></select> -->
                 <button id="decrease-presentation-text-btn" type="button" title="Decrease presentation text size"
                     aria-label="A-">A-</button>
                 <button id="increase-presentation-text-btn" type="button" title="Increase presentation text size"
@@ -286,7 +286,7 @@
         const controlsDiv = document.getElementById('controls');
         const presentationModeToggle = document.getElementById('presentation-mode-toggle');
         const presentationControlsDiv = document.getElementById('presentation-controls');
-        const displaySelect = document.getElementById('display-select');
+        // const displaySelect = document.getElementById('display-select');
         const increasePresentationTextBtn = document.getElementById('increase-presentation-text-btn');
         const decreasePresentationTextBtn = document.getElementById('decrease-presentation-text-btn');
         const backBtn = document.getElementById('back-btn');
