@@ -253,20 +253,24 @@
     </div>
 
     <div id="main-pane">
-        <div id="controls" style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 8px;">
+        <div id="controls"
+            style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 8px;">
             <button id="presentation-mode-toggle" type="button" style="display: none;">Presentation Mode: OFF</button>
             <div id="presentation-controls" style="display: none; align-items: center; gap: 8px;">
                 <label for="display-select">Display:</label>
                 <select id="display-select"></select>
-                <button id="decrease-presentation-text-btn" type="button" title="Decrease presentation text size" aria-label="A-">A-</button>
-                <button id="increase-presentation-text-btn" type="button" title="Increase presentation text size" aria-label="A+">A+</button>
+                <button id="decrease-presentation-text-btn" type="button" title="Decrease presentation text size"
+                    aria-label="A-">A-</button>
+                <button id="increase-presentation-text-btn" type="button" title="Increase presentation text size"
+                    aria-label="A+">A+</button>
             </div>
             <div id="text-size-controls" style="display: flex; align-items: center; gap: 8px;">
-            <button id="decrease-text-btn" type="button" title="Decrease text size" aria-label="A-">A-</button>
-            <button id="increase-text-btn" type="button" title="Increase text size" aria-label="A+">A+</button>
+                <button id="decrease-text-btn" type="button" title="Decrease text size" aria-label="A-">A-</button>
+                <button id="increase-text-btn" type="button" title="Increase text size" aria-label="A+">A+</button>
             </div>
+            <button id="back-btn" type="button">← Back to list</button>
         </div>
-        <button id="back-btn" type="button">← Back to list</button>
+        
         <div id="song-content"></div> <!-- Changed from pre to div -->
 
     </div>
@@ -532,7 +536,7 @@
                 openPresentationWindow();
                 // Show presentation controls only if window opened successfully
                 if (presentationWindow && !presentationWindow.closed) {
-                     presentationControlsDiv.style.display = 'flex';
+                    presentationControlsDiv.style.display = 'flex';
                 }
             } else {
                 // Close presentation window
@@ -550,15 +554,15 @@
 
             // Open a new window
             presentationWindow = window.open('', '_blank', windowFeatures);
-/*
-            // The following block for specific display placement is commented out.
-            // If re-enabled, ensure `targetDisplay` is correctly defined and handled.
-            // const displays = await navigator.getDisplays();
-            // const targetDisplay = displays.find(d => d.id === parseInt(selectedDisplayId));
-            // if (targetDisplay) {
-            //     presentationWindow = window.open('', '_blank', `left=${targetDisplay.bounds.x},top=${targetDisplay.bounds.y},width=${targetDisplay.bounds.width},height=${targetDisplay.bounds.height}`);
-            // } // else handle error or use the default window
-*/
+            /*
+                        // The following block for specific display placement is commented out.
+                        // If re-enabled, ensure `targetDisplay` is correctly defined and handled.
+                        // const displays = await navigator.getDisplays();
+                        // const targetDisplay = displays.find(d => d.id === parseInt(selectedDisplayId));
+                        // if (targetDisplay) {
+                        //     presentationWindow = window.open('', '_blank', `left=${targetDisplay.bounds.x},top=${targetDisplay.bounds.y},width=${targetDisplay.bounds.width},height=${targetDisplay.bounds.height}`);
+                        // } // else handle error or use the default window
+            */
 
             if (presentationWindow) {
                 presentationWindow.document.title = "Presentation";
