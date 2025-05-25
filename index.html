@@ -65,7 +65,12 @@
             flex-direction: column;
             height: 100vh;
             box-sizing: border-box;
-            /* Ensure padding/border are within height/width */
+            min-width: 260px;
+            /* Set a minimum width */
+            max-width: 340px;
+            /* Optional: set a maximum width */
+            width: 300px;
+            /* Set a fixed width for consistency */
         }
 
         #sidebar h2 {
@@ -186,6 +191,22 @@
             display: none;
         }
 
+        #controls button,
+        #text-size-controls button {
+            font-size: 1.2em;
+            padding: 10px 18px;
+            border-radius: 6px;
+            min-width: 44px;
+            min-height: 44px;
+        }
+
+        #back-btn {
+            font-size: 1.2em;
+            padding: 10px 18px;
+            border-radius: 6px;
+            min-width: 44px;
+            min-height: 44px;
+        }
 
         /* --- Mobile Responsive Styles --- */
         @media (max-width: 600px) {
@@ -194,14 +215,19 @@
             }
 
             #sidebar {
-                width: 100%;
+                width: 100vw;
+                /* Full viewport width */
+                min-width: 0;
+                /* Remove min-width restriction */
+                max-width: none;
+                /* Remove max-width restriction */
                 border-right: none;
                 border-bottom: 1px solid var(--border);
                 padding: 10px;
                 height: 100vh;
-                /* Ensure sidebar fills the screen */
                 display: flex;
                 flex-direction: column;
+                box-sizing: border-box;
             }
 
             .song-list-container {
@@ -233,6 +259,53 @@
             #back-btn {
                 display: block;
             }
+
+            #controls {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                gap: 0;
+                margin-bottom: 8px;
+            }
+
+            #back-btn {
+                display: block;
+                order: 0;
+            }
+
+            #text-size-controls {
+                order: 1;
+            }
+        }
+
+        /* Search input styles */
+        #song-search {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 8px;
+            font-size: 1em;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            box-sizing: border-box;
+        }
+
+        #clear-search-btn {
+            position: absolute;
+            right: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+            color: #888;
+            display: none;
+            padding: 0;
+            line-height: 1;
+        }
+
+        #clear-search-btn:hover {
+            color: #333;
         }
     </style>
 </head>
@@ -240,6 +313,20 @@
 <body>
     <div id="sidebar">
         <h2>Melodies Of Worship</h2>
+        <div style="position: relative; width: 100%; margin-bottom: 10px;">
+            <input
+                id="song-search"
+                type="text"
+                placeholder="Search songs..."
+                style="width: 100%; padding: 8px 32px 8px 8px; font-size: 1em; border-radius: 4px; border: 1px solid var(--border); box-sizing: border-box;"
+            />
+            <button
+                id="clear-search-btn"
+                type="button"
+                aria-label="Clear search"
+                style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 1.2em; cursor: pointer; color: #888; display: none; padding: 0; line-height: 1;"
+            >&#10006;</button>
+        </div>
         <div class="song-list-container">
             <ul id="song-list"></ul>
             <button id="scroll-bottom-btn" type="button" class="scroll-overlay-btn" aria-label="Go to bottom"
@@ -254,31 +341,47 @@
 
     <div id="main-pane">
         <div id="controls"
-            style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 8px;">
-            <button id="presentation-mode-toggle" type="button" style="display: none;">Presentation Mode: OFF</button>
-            <div id="presentation-controls" style="display: none; align-items: center; gap: 8px;">
-                <!-- <label for="display-select">Display:</label>
-                <select id="display-select"></select> -->
-                <button id="decrease-presentation-text-btn" type="button" title="Decrease presentation text size"
-                    aria-label="A-">A-</button>
-                <button id="increase-presentation-text-btn" type="button" title="Increase presentation text size"
-                    aria-label="A+">A+</button>
-            </div>
-            <div id="text-size-controls" style="display: flex; align-items: center; gap: 8px;">
-                <button id="decrease-text-btn" type="button" title="Decrease text size" aria-label="A-">A-</button>
-                <button id="increase-text-btn" type="button" title="Increase text size" aria-label="A+">A+</button>
-            </div>
+            style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px;">
             <button id="back-btn" type="button">← Back to list</button>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div id="text-size-controls" style="display: flex; align-items: center; gap: 8px;">
+                    <button id="decrease-text-btn" type="button" title="Decrease text size" aria-label="A-">A-</button>
+                    <button id="increase-text-btn" type="button" title="Increase text size" aria-label="A+">A+</button>
+                </div>
+                <button id="presentation-mode-toggle" type="button" style="margin-left:12px;">
+                    Presentation Mode: OFF
+                </button>
+                <select id="presentation-font-select" style="margin-left: 12px; display: none;">
+                    <option value="'Noto Sans Telugu', 'Roboto', Arial, sans-serif">Default</option>
+                    <option value="'Roboto', Arial, sans-serif">Roboto</option>
+                    <option value="'Noto Sans Telugu', Arial, sans-serif">Noto Sans Telugu</option>
+                    <option value="'Oswald', Arial, sans-serif">Oswald</option>
+                    <option value="'Lobster', cursive">Lobster</option>
+                </select>
+            </div>
         </div>
-        
-        <div id="song-content"></div> <!-- Changed from pre to div -->
 
+        <div id="song-content"></div> <!-- Changed from pre to div -->
+        <div id="presentation-controls" style="display:none; gap: 8px; margin-bottom: 8px;">
+            <button id="increase-presentation-text-btn" type="button" title="Increase presentation text size">A+</button>
+            <button id="decrease-presentation-text-btn" type="button" title="Decrease presentation text size">A-</button>
+        </div>
     </div>
     <script>
         // Replace with your GitHub repository details
         const GITHUB_USERNAME = 'ehowsecunderabad'; // e.g., 'octocat'
         const REPOSITORY_NAME = 'songs'; // e.g., 'my-songs'
         const FOLDER_PATH = 'songfiles'; // e.g., 'songs' or leave empty for root
+
+        // --- Google Fonts Config ---
+        const googleFonts = [
+            { name: "Roboto", css: "'Roboto', Arial, sans-serif", url: "https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" },
+            { name: "Noto Sans Telugu", css: "'Noto Sans Telugu', Arial, sans-serif", url: "https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu&display=swap" },
+            { name: "Oswald", css: "'Oswald', Arial, sans-serif", url: "https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&display=swap" },
+            { name: "Lobster", css: "'Lobster', cursive", url: "https://fonts.googleapis.com/css2?family=Lobster&display=swap" }
+        ];
+
+        // --- DOM Elements ---
         const songListElement = document.getElementById('song-list');
         const songContentElement = document.getElementById('song-content');
         const sidebar = document.getElementById('sidebar');
@@ -286,7 +389,6 @@
         const controlsDiv = document.getElementById('controls');
         const presentationModeToggle = document.getElementById('presentation-mode-toggle');
         const presentationControlsDiv = document.getElementById('presentation-controls');
-        // const displaySelect = document.getElementById('display-select');
         const increasePresentationTextBtn = document.getElementById('increase-presentation-text-btn');
         const decreasePresentationTextBtn = document.getElementById('decrease-presentation-text-btn');
         const backBtn = document.getElementById('back-btn');
@@ -295,180 +397,261 @@
         const scrollTopBtn = document.getElementById('scroll-top-btn');
         const increaseTextBtn = document.getElementById('increase-text-btn');
         const decreaseTextBtn = document.getElementById('decrease-text-btn');
+        const presentationFontSelect = document.getElementById('presentation-font-select');
+        const songSearchInput = document.getElementById('song-search');
+        const clearSearchBtn = document.getElementById('clear-search-btn');
+
+        // Store all song file objects for search
+        let allTxtFiles = [];
+
+        const songCache = new Map();
+        const INITIAL_SONG_CONTENT_MESSAGE = 'Select a song from the list to view its content.';
         const themeModes = ['system', 'light', 'dark'];
         const themeLabels = {
             'system': 'Theme: System Default',
             'light': 'Theme: Light',
             'dark': 'Theme: Dark'
         };
-        const INITIAL_SONG_CONTENT_MESSAGE = 'Select a song from the list to view its content.';
-        let isSongViewActiveOnMobile = false; // Tracks if song content is the main view on mobile
-        let currentFontSize = 1; // em
-        let presentationWindow = null;
-        let presentationFontSize = 1.5; // em for presentation
-        let isPresentationMode = false;
 
-        // Function to fetch the list of files (songs) from GitHub API
-        async function fetchSongList() {
+        let presentationWindow = null;
+let presentationWindowCheckInterval = null;
+let isPresentationMode = false;
+let presentationFontSize = 1.5; // or your default
+let currentFontSize = 1; // or your default
+
+        // Update fetchSongListAndContents to store txtFiles globally
+        async function fetchSongListAndContents() {
             try {
                 let apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${REPOSITORY_NAME}/contents`;
-                if (FOLDER_PATH) {
-                    apiUrl += `/${FOLDER_PATH}`;
-                }
+                if (FOLDER_PATH) apiUrl += `/${FOLDER_PATH}`;
                 const response = await fetch(apiUrl);
-                if (!response.ok) {
-                    throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
-                }
+                if (!response.ok) throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
                 const files = await response.json();
-                songListElement.innerHTML = ''; // Clear existing list
-
-                // Check if files is an array BEFORE attempting to filter it
-                if (!Array.isArray(files)) {
-                    console.error('GitHub API response for song list is not an array:', files);
-                    throw new Error('Unexpected response format from GitHub API. Expected an array of files.');
-                }
-
-                // Filter for .txt files and populate the list
+                songListElement.innerHTML = '';
+                if (!Array.isArray(files)) throw new Error('Unexpected response format from GitHub API.');
                 const txtFiles = files.filter(file => file.type === 'file' && file.name.endsWith('.txt'));
+                allTxtFiles = txtFiles; // <-- Store for search
                 if (txtFiles.length === 0) {
                     songListElement.innerHTML = '<li>No .txt songs found in this repository/folder.</li>';
                     return;
                 }
-
-                txtFiles.forEach(file => {
-                    const listItem = document.createElement('li');
-                    listItem.textContent = file.name.replace('.txt', ''); // Display without .txt extension
-                    listItem.dataset.downloadUrl = file.download_url; // Store the raw file URL
-                    listItem.addEventListener('click', () => displaySongContent(listItem.dataset.downloadUrl));
-                    songListElement.appendChild(listItem);
-                });
+                await Promise.all(txtFiles.map(async file => {
+                    try {
+                        const res = await fetch(file.download_url);
+                        const content = await res.text();
+                        songCache.set(file.name, { name: file.name.replace('.txt', ''), content, url: file.download_url });
+                    } catch {
+                        songCache.set(file.name, { name: file.name.replace('.txt', ''), content: '[Error loading song]', url: file.download_url });
+                    }
+                }));
+                renderSongList(allTxtFiles); // <-- Use allTxtFiles here
             } catch (error) {
-                console.error('Error fetching song list:', error);
-                songListElement.innerHTML = `<li class="error">Error loading song list: ${error.message}. Please check your GitHub username, repository name, and folder path.</li>`;
+                songListElement.innerHTML = `<li class="error">Error loading song list: ${error.message}</li>`;
             } finally {
-                updateScrollButtons(); // Ensure scroll buttons are updated after list is populated or error shown
+                updateScrollButtons();
             }
         }
 
-        // Function to fetch and display the content of a song
-        async function displaySongContent(url) {
-            songContentElement.classList.remove('error'); // Clear previous error state
-            songContentElement.innerHTML = ''; // Clear existing content
-            try {
-                songContentElement.innerHTML = '<p>Loading song...</p>';
-                const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`Failed to load song content: ${response.status} ${response.statusText}`);
-                }
-                const content = await response.text();
-                // Split content by lines and create paragraphs
-                const paragraphs = content.split(/\n\s*\n/);
-
-                // Clear "Loading song..." message and prepare for new content
-                songContentElement.innerHTML = '';
-
-                const paragraphElements = paragraphs.map(paragraphText => {
-                    // Trim whitespace from the start and end of the paragraph
-                    const trimmedParagraph = paragraphText.trim();
-                    if (!trimmedParagraph) return null; // Skip empty paragraphs, return null for filtering
-
-                    const p = document.createElement('p');
-                    // Replace single newlines within a paragraph with <br> for line breaks
-                    p.innerHTML = trimmedParagraph.replace(/\n/g, '<br>');
-                    // Add click listener to the paragraph element
-                    p.addEventListener('click', () => displayParagraphInPresentation(p.innerHTML)); // Pass HTML content
-                    return p;
-                }).filter(pElement => pElement !== null); // Filter out null elements
-
-                paragraphElements.forEach(pElement => songContentElement.appendChild(pElement));
-                isSongViewActiveOnMobile = true;
-                updateAppView();
-            } catch (error) {
-                console.error('Error displaying song content:', error);
-                songContentElement.textContent = `Error loading song: ${error.message}`;
-                songContentElement.classList.add('error');
-            }
+        // Render the song list (filtered or full)
+        function renderSongList(files) {
+            songListElement.innerHTML = '';
+            files.forEach(file => {
+                const listItem = document.createElement('li');
+                listItem.textContent = file.name.replace('.txt', '');
+                listItem.dataset.filename = file.name;
+                listItem.addEventListener('click', () => displaySongContentFromCache(file.name));
+                songListElement.appendChild(listItem);
+            });
+            updateScrollButtons();
         }
 
-        // Helper to check if mobile
-        function isMobile() {
-            return window.innerWidth <= 600;
-        }
-
-        // Centralized function to update the view based on screen size and song display state
-        function updateAppView() {
-            const mobile = isMobile();
-            if (mobile) {
-                if (isSongViewActiveOnMobile) {
-                    sidebar.style.display = 'none';
-                    mainPane.style.display = 'block';
-                    mainPane.style.height = '100vh'; // Ensure main pane takes full height
-                    backBtn.style.display = 'block';
-                    presentationModeToggle.style.display = 'none'; // Hide presentation toggle on mobile
-                } else { // List view on mobile
-                    sidebar.style.display = 'flex'; // #sidebar is a flex container
-                    mainPane.style.display = 'none';
-                    backBtn.style.display = 'none';
-                }
-            } else { // Desktop view
-                presentationModeToggle.style.display = 'block'; // Show presentation toggle on desktop
-                sidebar.style.display = 'flex';
-                mainPane.style.display = 'block';
-                mainPane.style.height = ''; // Reset height, let CSS (flex-grow) handle it
-                backBtn.style.display = 'none';
-            }
-        }
-
-        // Back button handler for mobile
-        backBtn.addEventListener('click', () => {
-            // This button is only visible on mobile when a song is active
-            isSongViewActiveOnMobile = false;
-            songContentElement.innerHTML = `<p>${INITIAL_SONG_CONTENT_MESSAGE}</p>`;
-            updateAppView();
-        });
-        // Scroll to bottom
-        scrollBottomBtn.addEventListener('click', () => {
-            songListElement.scrollTo({ top: songListElement.scrollHeight, behavior: 'smooth' });
-        });
-        // Scroll to top
-        scrollTopBtn.addEventListener('click', () => {
-            songListElement.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-        // Show/hide overlay buttons based on scroll position
-        function updateScrollButtons() {
-            const el = songListElement;
-            if (el.scrollHeight <= el.clientHeight) {
-                scrollBottomBtn.style.display = 'none';
-                scrollTopBtn.style.display = 'none';
+        // Instant search handler
+        songSearchInput.addEventListener('input', function () {
+            const query = this.value.trim().toLowerCase();
+            clearSearchBtn.style.display = this.value ? 'block' : 'none';
+            if (!query) {
+                renderSongList(allTxtFiles);
                 return;
             }
-            // At top
-            if (el.scrollTop < 10) {
-                scrollBottomBtn.style.display = 'block';
-                scrollTopBtn.style.display = 'none';
+            const filtered = allTxtFiles.filter(file => {
+                const title = file.name.replace('.txt', '').toLowerCase();
+                const song = songCache.get(file.name);
+                const content = song ? song.content.toLowerCase() : '';
+                return title.includes(query) || content.includes(query);
+            });
+            renderSongList(filtered);
+        });
+
+        clearSearchBtn.addEventListener('click', function () {
+            songSearchInput.value = '';
+            clearSearchBtn.style.display = 'none';
+            renderSongList(allTxtFiles);
+            songSearchInput.focus();
+        });
+
+        // --- Song Content Display ---
+        function displaySongContentFromCache(filename) {
+            songContentElement.classList.remove('error');
+            songContentElement.innerHTML = '';
+            const song = songCache.get(filename);
+            if (!song) {
+                songContentElement.innerHTML = '<p class="error">Song not found in cache.</p>';
+                return;
             }
-            // At bottom
-            else if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
-                scrollBottomBtn.style.display = 'none';
-                scrollTopBtn.style.display = 'block';
+            // Split content by paragraphs
+            const paragraphs = song.content.split(/\n\s*\n/);
+            songContentElement.innerHTML = '';
+            const paragraphElements = paragraphs.map(paragraphText => {
+                const trimmedParagraph = paragraphText.trim();
+                if (!trimmedParagraph) return null;
+                const p = document.createElement('p');
+                p.innerHTML = trimmedParagraph.replace(/\n/g, '<br>');
+                // Make paragraphs clickable to show in presentation window
+                p.addEventListener('click', () => displayParagraphInPresentation(p.innerHTML));
+                return p;
+            }).filter(pElement => pElement !== null);
+            paragraphElements.forEach(pElement => songContentElement.appendChild(pElement));
+            isSongViewActiveOnMobile = true;
+            updateAppView();
+        }
+
+        // --- Presentation Mode ---
+        presentationModeToggle.addEventListener('click', () => {
+            isPresentationMode = !isPresentationMode;
+            presentationModeToggle.textContent = `Presentation Mode: ${isPresentationMode ? 'ON' : 'OFF'}`;
+            presentationFontSelect.style.display = isPresentationMode ? 'inline-block' : 'none';
+            presentationControlsDiv.style.display = 'none';
+            if (isPresentationMode) {
+                openPresentationWindow();
+                if (presentationWindow && !presentationWindow.closed) {
+                    presentationControlsDiv.style.display = 'flex';
+                }
+            } else {
+                if (presentationWindow && !presentationWindow.closed) presentationWindow.close();
             }
-            // In between
-            else {
-                scrollBottomBtn.style.display = 'block';
-                scrollTopBtn.style.display = 'block';
+        });
+
+        function openPresentationWindow() {
+            if (!isPresentationMode) return;
+            const windowFeatures = 'menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes,width=800,height=600';
+            presentationWindow = window.open('', '_blank', windowFeatures);
+
+            if (presentationWindow) {
+                const font = presentationFontSelect.value;
+                presentationWindow.document.title = "Presentation";
+                presentationWindow.document.body.style.cssText = `
+                    margin: 0;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    height: 100vh;
+                    background-color: black;
+                    color: white;
+                    font-family: ${font};
+                    font-size: ${presentationFontSize}em;
+                    text-align: center;
+                    white-space: pre-wrap;
+                    padding: 20px;
+                    box-sizing: border-box;
+                `;
+                presentationWindow.document.body.innerHTML = '<div id="presentation-text"></div>';
+                // Inject Google Font link
+                const selectedFont = googleFonts.find(f => f.css === font);
+                if (selectedFont) {
+                    const link = presentationWindow.document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.href = selectedFont.url;
+                    presentationWindow.document.head.appendChild(link);
+                }
+                // Monitor window close
+                if (presentationWindowCheckInterval) clearInterval(presentationWindowCheckInterval);
+                presentationWindowCheckInterval = setInterval(() => {
+                    if (!presentationWindow || presentationWindow.closed) {
+                        isPresentationMode = false;
+                        presentationModeToggle.textContent = 'Presentation Mode: OFF';
+                        presentationControlsDiv.style.display = 'none';
+                        presentationFontSelect.style.display = 'none';
+                        clearInterval(presentationWindowCheckInterval);
+                        presentationWindowCheckInterval = null;
+                    }
+                }, 500);
+            } else {
+                alert("Could not open presentation window. Please allow pop-ups for this site.");
+                isPresentationMode = false;
+                presentationModeToggle.textContent = 'Presentation Mode: OFF';
+                presentationControlsDiv.style.display = 'none';
+                presentationFontSelect.style.display = 'none';
             }
         }
-        // Update buttons on scroll and after loading songs
-        songListElement.addEventListener('scroll', updateScrollButtons);
-        document.addEventListener('DOMContentLoaded', async () => {
-            songContentElement.textContent = INITIAL_SONG_CONTENT_MESSAGE;
-            fetchSongList();
-            loadTheme();
-            updateAppView(); // Set initial view based on screen size
-        });
-        // On resize, reset view if needed
-        window.addEventListener('resize', updateAppView);
 
+        function displayParagraphInPresentation(paragraphHtml) {
+            if (presentationWindow && !presentationWindow.closed) {
+                const presentationTextDiv = presentationWindow.document.getElementById('presentation-text');
+                if (presentationTextDiv) presentationTextDiv.innerHTML = paragraphHtml;
+            }
+        }
+
+        // --- Font Size Controls ---
+        function updateFontSize() {
+            songContentElement.style.fontSize = currentFontSize + 'em';
+        }
+        increaseTextBtn.addEventListener('click', () => {
+            if (isPresentationMode && presentationWindow && !presentationWindow.closed) {
+                if (presentationFontSize < 5) {
+                    presentationFontSize += 0.1;
+                    presentationWindow.document.body.style.fontSize = presentationFontSize + 'em';
+                }
+            } else {
+                if (currentFontSize < 2.5) {
+                    currentFontSize += 0.1;
+                    updateFontSize();
+                }
+            }
+        });
+        decreaseTextBtn.addEventListener('click', () => {
+            if (isPresentationMode && presentationWindow && !presentationWindow.closed) {
+                if (presentationFontSize > 0.5) {
+                    presentationFontSize -= 0.1;
+                    presentationWindow.document.body.style.fontSize = presentationFontSize + 'em';
+                }
+            } else {
+                if (currentFontSize > 0.7) {
+                    currentFontSize -= 0.1;
+                    updateFontSize();
+                }
+            }
+        });
+        increasePresentationTextBtn.addEventListener('click', () => {
+            if (presentationFontSize < 5 && presentationWindow && !presentationWindow.closed) {
+                presentationFontSize += 0.2;
+                presentationWindow.document.body.style.fontSize = presentationFontSize + 'em';
+            }
+        });
+        decreasePresentationTextBtn.addEventListener('click', () => {
+            if (presentationFontSize > 0.5 && presentationWindow && !presentationWindow.closed) {
+                presentationFontSize -= 0.2;
+                presentationWindow.document.body.style.fontSize = presentationFontSize + 'em';
+            }
+        });
+
+        // --- Font Selection for Presentation ---
+        function applyPresentationFont() {
+            if (presentationWindow && !presentationWindow.closed) {
+                const font = presentationFontSelect.value;
+                presentationWindow.document.body.style.fontFamily = font;
+                // Inject Google Font link if needed
+                const selectedFont = googleFonts.find(f => f.css === font);
+                if (selectedFont && !presentationWindow.document.querySelector(`link[href="${selectedFont.url}"]`)) {
+                    const link = presentationWindow.document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.href = selectedFont.url;
+                    presentationWindow.document.head.appendChild(link);
+                }
+            }
+        }
+        presentationFontSelect.addEventListener('change', applyPresentationFont);
+
+        // --- Theme ---
         function applyTheme(theme) {
             if (theme === 'system') {
                 // Check system preference and apply accordingly
@@ -501,137 +684,87 @@
             }
         });
 
-        // Text size controls for main pane
-        songContentElement.style.fontSize = currentFontSize + 'em'; // Initialize font size
-        songContentElement.style.lineHeight = '1.5'; // Ensure line height is set
-
-
-        function updateFontSize() {
-            songContentElement.style.fontSize = currentFontSize + 'em';
-        }
-
-        increaseTextBtn.addEventListener('click', () => {
-            if (currentFontSize < 2.5) {
-                currentFontSize += 0.1;
-                updateFontSize();
-            }
-        });
-        decreaseTextBtn.addEventListener('click', () => {
-            if (currentFontSize > 0.7) {
-                currentFontSize -= 0.1;
-                updateFontSize();
-            }
-        });
-
-        // Presentation Mode Logic
-        presentationModeToggle.addEventListener('click', async () => {
-            isPresentationMode = !isPresentationMode;
-            presentationModeToggle.textContent = `Presentation Mode: ${isPresentationMode ? 'ON' : 'OFF'}`;
-
-            // Hide presentation controls initially
-            presentationControlsDiv.style.display = 'none';
-
-            if (isPresentationMode) {
-                // Open a new window with minimal features
-                openPresentationWindow();
-                // Show presentation controls only if window opened successfully
-                if (presentationWindow && !presentationWindow.closed) {
-                    presentationControlsDiv.style.display = 'flex';
+        // --- Mobile/Desktop View Logic ---
+        function isMobile() { return window.innerWidth <= 600; }
+        function updateAppView() {
+            const mobile = isMobile();
+            if (mobile) {
+                if (isSongViewActiveOnMobile) {
+                    sidebar.style.display = 'none';
+                    mainPane.style.display = 'block';
+                    mainPane.style.height = '100vh';
+                    backBtn.style.display = 'block';
+                    presentationModeToggle.style.display = 'none';
+                } else {
+                    sidebar.style.display = 'flex';
+                    mainPane.style.display = 'none';
+                    backBtn.style.display = 'none';
+                    presentationModeToggle.style.display = 'none';
                 }
             } else {
-                // Close presentation window
-                if (presentationWindow && !presentationWindow.closed) {
-                    presentationWindow.close();
-                }
+                presentationModeToggle.style.display = 'block';
+                sidebar.style.display = 'flex';
+                mainPane.style.display = 'block';
+                mainPane.style.height = '';
+                backBtn.style.display = 'none';
             }
+        }
+
+        // --- Back Button (Mobile) ---
+        backBtn.addEventListener('click', () => {
+            isSongViewActiveOnMobile = false;
+            songContentElement.innerHTML = `<p>${INITIAL_SONG_CONTENT_MESSAGE}</p>`;
+            updateAppView();
         });
 
-        async function openPresentationWindow() {
-            if (!isPresentationMode) return;
-
-            // Features for a minimal window (no toolbar, location bar, etc.)
-            const windowFeatures = 'menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes';
-
-            // Open a new window
-            presentationWindow = window.open('', '_blank', windowFeatures);
-            /*
-                        // The following block for specific display placement is commented out.
-                        // If re-enabled, ensure `targetDisplay` is correctly defined and handled.
-                        // const displays = await navigator.getDisplays();
-                        // const targetDisplay = displays.find(d => d.id === parseInt(selectedDisplayId));
-                        // if (targetDisplay) {
-                        //     presentationWindow = window.open('', '_blank', `left=${targetDisplay.bounds.x},top=${targetDisplay.bounds.y},width=${targetDisplay.bounds.width},height=${targetDisplay.bounds.height}`);
-                        // } // else handle error or use the default window
-            */
-
-            if (presentationWindow) {
-                presentationWindow.document.title = "Presentation";
-                presentationWindow.document.body.style.cssText = `
-                    margin: 0;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    height: 100vh;
-                    background-color: black;
-                    color: white;
-                    font-family: 'Noto Sans Telugu', 'Roboto', Arial, sans-serif;
-                    font-size: ${presentationFontSize}em;
-                    text-align: center;
-                    white-space: pre-wrap; /* Allow wrapping */
-                    padding: 20px; /* Add some padding */ /* Keep padding */
-                    box-sizing: border-box;
-                `;
-                presentationWindow.document.body.innerHTML = '<div id="presentation-text"></div>';
+        // --- Scroll Buttons ---
+        scrollBottomBtn.addEventListener('click', () => {
+            songListElement.scrollTo({ top: songListElement.scrollHeight, behavior: 'smooth' });
+        });
+        scrollTopBtn.addEventListener('click', () => {
+            songListElement.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        function updateScrollButtons() {
+            const el = songListElement;
+            if (el.scrollHeight <= el.clientHeight) {
+                scrollBottomBtn.style.display = 'none';
+                scrollTopBtn.style.display = 'none';
+                return;
+            }
+            if (el.scrollTop < 10) {
+                scrollBottomBtn.style.display = 'block';
+                scrollTopBtn.style.display = 'none';
+            } else if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
+                scrollBottomBtn.style.display = 'none';
+                scrollTopBtn.style.display = 'block';
             } else {
-                alert("Could not open presentation window. Please allow pop-ups for this site.");
-                isPresentationMode = false;
-                presentationModeToggle.textContent = 'Presentation Mode: OFF';
-                presentationControlsDiv.style.display = 'none';
+                scrollBottomBtn.style.display = 'block';
+                scrollTopBtn.style.display = 'block';
             }
         }
+        songListElement.addEventListener('scroll', updateScrollButtons);
 
-        function displayParagraphInPresentation(paragraphHtml) {
-            if (presentationWindow && !presentationWindow.closed) {
-                const presentationTextDiv = presentationWindow.document.getElementById('presentation-text');
-                if (presentationTextDiv) {
-                    presentationTextDiv.innerHTML = paragraphHtml; // Use innerHTML to render <br>
-                }
-            }
-        }
-
-        // Presentation text size controls
-        increasePresentationTextBtn.addEventListener('click', () => {
-            if (presentationFontSize < 5) { // Set a max size
-                presentationFontSize += 0.2;
-                if (presentationWindow && !presentationWindow.closed) {
-                    presentationWindow.document.body.style.fontSize = presentationFontSize + 'em';
-                }
-            }
+        // --- Window/Document Events ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            songContentElement.textContent = INITIAL_SONG_CONTENT_MESSAGE;
+            await fetchSongListAndContents();
+            loadTheme();
+            updateAppView();
+            updateFontSize();
         });
-
-        decreasePresentationTextBtn.addEventListener('click', () => {
-            if (presentationFontSize > 0.5) { // Set a min size
-                presentationFontSize -= 0.2;
-                if (presentationWindow && !presentationWindow.closed) {
-                    presentationWindow.document.body.style.fontSize = presentationFontSize + 'em';
-                }
-            }
-        });
-
-        // Ensure presentation window closes if the main window closes
+        window.addEventListener('resize', updateAppView);
         window.addEventListener('beforeunload', () => {
-            if (presentationWindow && !presentationWindow.closed) {
-                presentationWindow.close();
-            }
+            if (presentationWindow && !presentationWindow.closed) presentationWindow.close();
+            if (presentationWindowCheckInterval) clearInterval(presentationWindowCheckInterval);
         });
 
-        // Add styles for clickable paragraphs in main pane
+        // --- Style for Clickable Paragraphs ---
         const styleSheet = document.createElement("style");
         styleSheet.type = "text/css";
         styleSheet.innerText = `
             #song-content p {
                 cursor: pointer;
-                margin: 0 0 1em 0; /* Add space between paragraphs */
+                margin: 0 0 1em 0;
                 padding: 0;
                 transition: background-color 0.2s ease;
             }
@@ -640,11 +773,6 @@
             }
         `;
         document.head.appendChild(styleSheet);
-
-        // Initial setup
-        document.addEventListener('DOMContentLoaded', () => {
-            updateFontSize(); // Initialize main pane font size
-        });
     </script>
 </body>
 
