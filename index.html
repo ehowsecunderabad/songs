@@ -307,9 +307,10 @@
         let presentationWindow = null;
         let presentationFontSize = 1.5; // em for presentation
         let isPresentationMode = false;
+        const songCache = new Map(); // Map<filename, {name, content, url}>
 
-        // Function to fetch the list of files (songs) from GitHub API
-        async function fetchSongList() {
+        // Function to fetch the list of files (songs) from GitHub API and preload all contents
+        async function fetchSongListAndContents() {
             try {
                 let apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${REPOSITORY_NAME}/contents`;
                 if (FOLDER_PATH) {
@@ -322,72 +323,76 @@
                 const files = await response.json();
                 songListElement.innerHTML = ''; // Clear existing list
 
-                // Check if files is an array BEFORE attempting to filter it
                 if (!Array.isArray(files)) {
                     console.error('GitHub API response for song list is not an array:', files);
                     throw new Error('Unexpected response format from GitHub API. Expected an array of files.');
                 }
 
-                // Filter for .txt files and populate the list
+                // Filter for .txt files
                 const txtFiles = files.filter(file => file.type === 'file' && file.name.endsWith('.txt'));
                 if (txtFiles.length === 0) {
                     songListElement.innerHTML = '<li>No .txt songs found in this repository/folder.</li>';
                     return;
                 }
 
+                // Fetch all song contents in parallel
+                await Promise.all(txtFiles.map(async file => {
+                    try {
+                        const res = await fetch(file.download_url);
+                        const content = await res.text();
+                        songCache.set(file.name, {
+                            name: file.name.replace('.txt', ''),
+                            content,
+                            url: file.download_url
+                        });
+                    } catch (err) {
+                        songCache.set(file.name, {
+                            name: file.name.replace('.txt', ''),
+                            content: '[Error loading song]',
+                            url: file.download_url
+                        });
+                    }
+                }));
+
+                // Populate the list
                 txtFiles.forEach(file => {
                     const listItem = document.createElement('li');
-                    listItem.textContent = file.name.replace('.txt', ''); // Display without .txt extension
-                    listItem.dataset.downloadUrl = file.download_url; // Store the raw file URL
-                    listItem.addEventListener('click', () => displaySongContent(listItem.dataset.downloadUrl));
+                    listItem.textContent = file.name.replace('.txt', '');
+                    listItem.dataset.filename = file.name;
+                    listItem.addEventListener('click', () => displaySongContentFromCache(file.name));
                     songListElement.appendChild(listItem);
                 });
             } catch (error) {
                 console.error('Error fetching song list:', error);
                 songListElement.innerHTML = `<li class="error">Error loading song list: ${error.message}. Please check your GitHub username, repository name, and folder path.</li>`;
             } finally {
-                updateScrollButtons(); // Ensure scroll buttons are updated after list is populated or error shown
+                updateScrollButtons();
             }
         }
 
-        // Function to fetch and display the content of a song
-        async function displaySongContent(url) {
-            songContentElement.classList.remove('error'); // Clear previous error state
-            songContentElement.innerHTML = ''; // Clear existing content
-            try {
-                songContentElement.innerHTML = '<p>Loading song...</p>';
-                const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`Failed to load song content: ${response.status} ${response.statusText}`);
-                }
-                const content = await response.text();
-                // Split content by lines and create paragraphs
-                const paragraphs = content.split(/\n\s*\n/);
-
-                // Clear "Loading song..." message and prepare for new content
-                songContentElement.innerHTML = '';
-
-                const paragraphElements = paragraphs.map(paragraphText => {
-                    // Trim whitespace from the start and end of the paragraph
-                    const trimmedParagraph = paragraphText.trim();
-                    if (!trimmedParagraph) return null; // Skip empty paragraphs, return null for filtering
-
-                    const p = document.createElement('p');
-                    // Replace single newlines within a paragraph with <br> for line breaks
-                    p.innerHTML = trimmedParagraph.replace(/\n/g, '<br>');
-                    // Add click listener to the paragraph element
-                    p.addEventListener('click', () => displayParagraphInPresentation(p.innerHTML)); // Pass HTML content
-                    return p;
-                }).filter(pElement => pElement !== null); // Filter out null elements
-
-                paragraphElements.forEach(pElement => songContentElement.appendChild(pElement));
-                isSongViewActiveOnMobile = true;
-                updateAppView();
-            } catch (error) {
-                console.error('Error displaying song content:', error);
-                songContentElement.textContent = `Error loading song: ${error.message}`;
-                songContentElement.classList.add('error');
+        // Display song content from cache
+        function displaySongContentFromCache(filename) {
+            songContentElement.classList.remove('error');
+            songContentElement.innerHTML = '';
+            const song = songCache.get(filename);
+            if (!song) {
+                songContentElement.innerHTML = '<p class="error">Song not found in cache.</p>';
+                return;
             }
+            // Split content by paragraphs
+            const paragraphs = song.content.split(/\n\s*\n/);
+            songContentElement.innerHTML = '';
+            const paragraphElements = paragraphs.map(paragraphText => {
+                const trimmedParagraph = paragraphText.trim();
+                if (!trimmedParagraph) return null;
+                const p = document.createElement('p');
+                p.innerHTML = trimmedParagraph.replace(/\n/g, '<br>');
+                p.addEventListener('click', () => displayParagraphInPresentation(p.innerHTML));
+                return p;
+            }).filter(pElement => pElement !== null);
+            paragraphElements.forEach(pElement => songContentElement.appendChild(pElement));
+            isSongViewActiveOnMobile = true;
+            updateAppView();
         }
 
         // Helper to check if mobile
@@ -462,9 +467,9 @@
         songListElement.addEventListener('scroll', updateScrollButtons);
         document.addEventListener('DOMContentLoaded', async () => {
             songContentElement.textContent = INITIAL_SONG_CONTENT_MESSAGE;
-            fetchSongList();
+            await fetchSongListAndContents();
             loadTheme();
-            updateAppView(); // Set initial view based on screen size
+            updateAppView();
         });
         // On resize, reset view if needed
         window.addEventListener('resize', updateAppView);
