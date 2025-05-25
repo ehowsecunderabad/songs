@@ -186,6 +186,22 @@
             display: none;
         }
 
+        #controls button,
+        #text-size-controls button {
+            font-size: 1.2em;
+            padding: 10px 18px;
+            border-radius: 6px;
+            min-width: 44px;
+            min-height: 44px;
+        }
+
+        #back-btn {
+            font-size: 1.2em;
+            padding: 10px 18px;
+            border-radius: 6px;
+            min-width: 44px;
+            min-height: 44px;
+        }
 
         /* --- Mobile Responsive Styles --- */
         @media (max-width: 600px) {
@@ -233,6 +249,23 @@
             #back-btn {
                 display: block;
             }
+
+            #controls {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                gap: 0;
+                margin-bottom: 8px;
+            }
+
+            #back-btn {
+                display: block;
+                order: 0;
+            }
+
+            #text-size-controls {
+                order: 1;
+            }
         }
     </style>
 </head>
@@ -254,25 +287,31 @@
 
     <div id="main-pane">
         <div id="controls"
-            style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 8px;">
-            <button id="presentation-mode-toggle" type="button" style="display: none;">Presentation Mode: OFF</button>
-            <div id="presentation-controls" style="display: none; align-items: center; gap: 8px;">
-                <!-- <label for="display-select">Display:</label>
-                <select id="display-select"></select> -->
-                <button id="decrease-presentation-text-btn" type="button" title="Decrease presentation text size"
-                    aria-label="A-">A-</button>
-                <button id="increase-presentation-text-btn" type="button" title="Increase presentation text size"
-                    aria-label="A+">A+</button>
-            </div>
-            <div id="text-size-controls" style="display: flex; align-items: center; gap: 8px;">
-                <button id="decrease-text-btn" type="button" title="Decrease text size" aria-label="A-">A-</button>
-                <button id="increase-text-btn" type="button" title="Increase text size" aria-label="A+">A+</button>
-            </div>
+            style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px;">
             <button id="back-btn" type="button">← Back to list</button>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div id="text-size-controls" style="display: flex; align-items: center; gap: 8px;">
+                    <button id="decrease-text-btn" type="button" title="Decrease text size" aria-label="A-">A-</button>
+                    <button id="increase-text-btn" type="button" title="Increase text size" aria-label="A+">A+</button>
+                </div>
+                <button id="presentation-mode-toggle" type="button" style="margin-left:12px;">
+                    Presentation Mode: OFF
+                </button>
+                <select id="presentation-font-select" style="margin-left: 12px; display: none;">
+                    <option value="'Noto Sans Telugu', 'Roboto', Arial, sans-serif">Default</option>
+                    <option value="'Roboto', Arial, sans-serif">Roboto</option>
+                    <option value="'Noto Sans Telugu', Arial, sans-serif">Noto Sans Telugu</option>
+                    <option value="'Oswald', Arial, sans-serif">Oswald</option>
+                    <option value="'Lobster', cursive">Lobster</option>
+                </select>
+            </div>
         </div>
-        
-        <div id="song-content"></div> <!-- Changed from pre to div -->
 
+        <div id="song-content"></div> <!-- Changed from pre to div -->
+        <div id="presentation-controls" style="display:none; gap: 8px; margin-bottom: 8px;">
+            <button id="increase-presentation-text-btn" type="button" title="Increase presentation text size">A+</button>
+            <button id="decrease-presentation-text-btn" type="button" title="Decrease presentation text size">A-</button>
+        </div>
     </div>
     <script>
         // Replace with your GitHub repository details
@@ -308,6 +347,41 @@
         let presentationFontSize = 1.5; // em for presentation
         let isPresentationMode = false;
         const songCache = new Map(); // Map<filename, {name, content, url}>
+
+        // Add this near the top of your <script> section
+        const googleFonts = [
+            { name: "Roboto", css: "'Roboto', Arial, sans-serif", url: "https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" },
+            { name: "Noto Sans Telugu", css: "'Noto Sans Telugu', Arial, sans-serif", url: "https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu&display=swap" },
+            { name: "Oswald", css: "'Oswald', Arial, sans-serif", url: "https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&display=swap" },
+            { name: "Lobster", css: "'Lobster', cursive", url: "https://fonts.googleapis.com/css2?family=Lobster&display=swap" }
+        ];
+
+        // Utility to add a Google Font link if not already present
+        function ensureGoogleFontLoaded(url) {
+            if (!document.querySelector(`link[href="${url}"]`)) {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = url;
+                document.head.appendChild(link);
+            }
+        }
+
+        // Populate the dropdown and load fonts
+        const presentationFontSelect = document.getElementById('presentation-font-select');
+        function populateFontDropdown() {
+            // Keep the first option as Default
+            while (presentationFontSelect.options.length > 1) {
+                presentationFontSelect.remove(1);
+            }
+            googleFonts.forEach(font => {
+                const opt = document.createElement('option');
+                opt.value = font.css;
+                opt.textContent = font.name;
+                presentationFontSelect.appendChild(opt);
+                ensureGoogleFontLoaded(font.url);
+            });
+        }
+        populateFontDropdown();
 
         // Function to fetch the list of files (songs) from GitHub API and preload all contents
         async function fetchSongListAndContents() {
@@ -387,6 +461,7 @@
                 if (!trimmedParagraph) return null;
                 const p = document.createElement('p');
                 p.innerHTML = trimmedParagraph.replace(/\n/g, '<br>');
+                // Make paragraphs clickable to show in presentation window
                 p.addEventListener('click', () => displayParagraphInPresentation(p.innerHTML));
                 return p;
             }).filter(pElement => pElement !== null);
@@ -407,19 +482,20 @@
                 if (isSongViewActiveOnMobile) {
                     sidebar.style.display = 'none';
                     mainPane.style.display = 'block';
-                    mainPane.style.height = '100vh'; // Ensure main pane takes full height
+                    mainPane.style.height = '100vh';
                     backBtn.style.display = 'block';
-                    presentationModeToggle.style.display = 'none'; // Hide presentation toggle on mobile
-                } else { // List view on mobile
-                    sidebar.style.display = 'flex'; // #sidebar is a flex container
+                    presentationModeToggle.style.display = 'none'; // Hide on mobile
+                } else {
+                    sidebar.style.display = 'flex';
                     mainPane.style.display = 'none';
                     backBtn.style.display = 'none';
+                    presentationModeToggle.style.display = 'none'; // Hide on mobile
                 }
-            } else { // Desktop view
-                presentationModeToggle.style.display = 'block'; // Show presentation toggle on desktop
+            } else {
+                presentationModeToggle.style.display = 'block'; // Show on desktop
                 sidebar.style.display = 'flex';
                 mainPane.style.display = 'block';
-                mainPane.style.height = ''; // Reset height, let CSS (flex-grow) handle it
+                mainPane.style.height = '';
                 backBtn.style.display = 'none';
             }
         }
@@ -516,15 +592,33 @@
         }
 
         increaseTextBtn.addEventListener('click', () => {
-            if (currentFontSize < 2.5) {
-                currentFontSize += 0.1;
-                updateFontSize();
+            if (isPresentationMode && presentationWindow && !presentationWindow.closed) {
+                // Change font size in presentation window
+                if (presentationFontSize < 5) {
+                    presentationFontSize += 0.1;
+                    presentationWindow.document.body.style.fontSize = presentationFontSize + 'em';
+                }
+            } else {
+                // Change font size in main pane
+                if (currentFontSize < 2.5) {
+                    currentFontSize += 0.1;
+                    updateFontSize();
+                }
             }
         });
         decreaseTextBtn.addEventListener('click', () => {
-            if (currentFontSize > 0.7) {
-                currentFontSize -= 0.1;
-                updateFontSize();
+            if (isPresentationMode && presentationWindow && !presentationWindow.closed) {
+                // Change font size in presentation window
+                if (presentationFontSize > 0.5) {
+                    presentationFontSize -= 0.1;
+                    presentationWindow.document.body.style.fontSize = presentationFontSize + 'em';
+                }
+            } else {
+                // Change font size in main pane
+                if (currentFontSize > 0.7) {
+                    currentFontSize -= 0.1;
+                    updateFontSize();
+                }
             }
         });
 
@@ -532,6 +626,7 @@
         presentationModeToggle.addEventListener('click', async () => {
             isPresentationMode = !isPresentationMode;
             presentationModeToggle.textContent = `Presentation Mode: ${isPresentationMode ? 'ON' : 'OFF'}`;
+            presentationFontSelect.style.display = isPresentationMode ? 'inline-block' : 'none';
 
             // Hide presentation controls initially
             presentationControlsDiv.style.display = 'none';
@@ -551,25 +646,15 @@
             }
         });
 
-        async function openPresentationWindow() {
+        let presentationWindowCheckInterval = null;
+
+        function openPresentationWindow() {
             if (!isPresentationMode) return;
-
-            // Features for a minimal window (no toolbar, location bar, etc.)
-            const windowFeatures = 'menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes';
-
-            // Open a new window
+            const windowFeatures = 'menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes,width=800,height=600';
             presentationWindow = window.open('', '_blank', windowFeatures);
-            /*
-                        // The following block for specific display placement is commented out.
-                        // If re-enabled, ensure `targetDisplay` is correctly defined and handled.
-                        // const displays = await navigator.getDisplays();
-                        // const targetDisplay = displays.find(d => d.id === parseInt(selectedDisplayId));
-                        // if (targetDisplay) {
-                        //     presentationWindow = window.open('', '_blank', `left=${targetDisplay.bounds.x},top=${targetDisplay.bounds.y},width=${targetDisplay.bounds.width},height=${targetDisplay.bounds.height}`);
-                        // } // else handle error or use the default window
-            */
 
             if (presentationWindow) {
+                const font = presentationFontSelect.value;
                 presentationWindow.document.title = "Presentation";
                 presentationWindow.document.body.style.cssText = `
                     margin: 0;
@@ -579,14 +664,34 @@
                     height: 100vh;
                     background-color: black;
                     color: white;
-                    font-family: 'Noto Sans Telugu', 'Roboto', Arial, sans-serif;
+                    font-family: ${font};
                     font-size: ${presentationFontSize}em;
                     text-align: center;
-                    white-space: pre-wrap; /* Allow wrapping */
-                    padding: 20px; /* Add some padding */ /* Keep padding */
+                    white-space: pre-wrap;
+                    padding: 20px;
                     box-sizing: border-box;
                 `;
                 presentationWindow.document.body.innerHTML = '<div id="presentation-text"></div>';
+                // Also inject the Google Fonts link for the selected font
+                const selectedFont = googleFonts.find(f => f.css === font);
+                if (selectedFont) {
+                    const link = presentationWindow.document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.href = selectedFont.url;
+                    presentationWindow.document.head.appendChild(link);
+                }
+                // Start interval to check if window is closed
+                if (presentationWindowCheckInterval) clearInterval(presentationWindowCheckInterval);
+                presentationWindowCheckInterval = setInterval(() => {
+                    if (!presentationWindow || presentationWindow.closed) {
+                        // Window closed, turn off presentation mode
+                        isPresentationMode = false;
+                        presentationModeToggle.textContent = 'Presentation Mode: OFF';
+                        presentationControlsDiv.style.display = 'none';
+                        clearInterval(presentationWindowCheckInterval);
+                        presentationWindowCheckInterval = null;
+                    }
+                }, 500);
             } else {
                 alert("Could not open presentation window. Please allow pop-ups for this site.");
                 isPresentationMode = false;
@@ -595,11 +700,12 @@
             }
         }
 
+        // This function sends the clicked paragraph to the presentation window
         function displayParagraphInPresentation(paragraphHtml) {
             if (presentationWindow && !presentationWindow.closed) {
                 const presentationTextDiv = presentationWindow.document.getElementById('presentation-text');
                 if (presentationTextDiv) {
-                    presentationTextDiv.innerHTML = paragraphHtml; // Use innerHTML to render <br>
+                    presentationTextDiv.innerHTML = paragraphHtml;
                 }
             }
         }
@@ -628,6 +734,10 @@
             if (presentationWindow && !presentationWindow.closed) {
                 presentationWindow.close();
             }
+            if (presentationWindowCheckInterval) {
+                clearInterval(presentationWindowCheckInterval);
+                presentationWindowCheckInterval = null;
+            }
         });
 
         // Add styles for clickable paragraphs in main pane
@@ -650,6 +760,14 @@
         document.addEventListener('DOMContentLoaded', () => {
             updateFontSize(); // Initialize main pane font size
         });
+
+        function applyPresentationFont() {
+            if (presentationWindow && !presentationWindow.closed) {
+                const font = presentationFontSelect.value;
+                presentationWindow.document.body.style.fontFamily = font;
+            }
+        }
+        presentationFontSelect.addEventListener('change', applyPresentationFont);
     </script>
 </body>
 
