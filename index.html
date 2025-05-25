@@ -65,7 +65,12 @@
             flex-direction: column;
             height: 100vh;
             box-sizing: border-box;
-            /* Ensure padding/border are within height/width */
+            min-width: 260px;
+            /* Set a minimum width */
+            max-width: 340px;
+            /* Optional: set a maximum width */
+            width: 300px;
+            /* Set a fixed width for consistency */
         }
 
         #sidebar h2 {
@@ -267,12 +272,56 @@
                 order: 1;
             }
         }
+
+        /* Search input styles */
+        #song-search {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 8px;
+            font-size: 1em;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            box-sizing: border-box;
+        }
+
+        #clear-search-btn {
+            position: absolute;
+            right: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+            color: #888;
+            display: none;
+            padding: 0;
+            line-height: 1;
+        }
+
+        #clear-search-btn:hover {
+            color: #333;
+        }
     </style>
 </head>
 
 <body>
     <div id="sidebar">
         <h2>Melodies Of Worship</h2>
+        <div style="position: relative; width: 100%; margin-bottom: 10px;">
+            <input
+                id="song-search"
+                type="text"
+                placeholder="Search songs..."
+                style="width: 100%; padding: 8px 32px 8px 8px; font-size: 1em; border-radius: 4px; border: 1px solid var(--border); box-sizing: border-box;"
+            />
+            <button
+                id="clear-search-btn"
+                type="button"
+                aria-label="Clear search"
+                style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 1.2em; cursor: pointer; color: #888; display: none; padding: 0; line-height: 1;"
+            >&#10006;</button>
+        </div>
         <div class="song-list-container">
             <ul id="song-list"></ul>
             <button id="scroll-bottom-btn" type="button" class="scroll-overlay-btn" aria-label="Go to bottom"
@@ -344,108 +393,96 @@
         const increaseTextBtn = document.getElementById('increase-text-btn');
         const decreaseTextBtn = document.getElementById('decrease-text-btn');
         const presentationFontSelect = document.getElementById('presentation-font-select');
+        const songSearchInput = document.getElementById('song-search');
+        const clearSearchBtn = document.getElementById('clear-search-btn');
 
-        // --- State ---
+        // Store all song file objects for search
+        let allTxtFiles = [];
+
+        const songCache = new Map();
+        const INITIAL_SONG_CONTENT_MESSAGE = 'Select a song from the list to view its content.';
         const themeModes = ['system', 'light', 'dark'];
         const themeLabels = {
             'system': 'Theme: System Default',
             'light': 'Theme: Light',
             'dark': 'Theme: Dark'
         };
-        const INITIAL_SONG_CONTENT_MESSAGE = 'Select a song from the list to view its content.';
-        let isSongViewActiveOnMobile = false;
-        let currentFontSize = 1; // em
+
         let presentationWindow = null;
-        let presentationFontSize = 1.5; // em
-        let isPresentationMode = false;
-        let presentationWindowCheckInterval = null;
-        const songCache = new Map();
+let presentationWindowCheckInterval = null;
+let isPresentationMode = false;
+let presentationFontSize = 1.5; // or your default
+let currentFontSize = 1; // or your default
 
-        // --- Google Fonts Loader & Dropdown ---
-        function ensureGoogleFontLoaded(url) {
-            if (!document.querySelector(`link[href="${url}"]`)) {
-                const link = document.createElement('link');
-                link.rel = 'stylesheet';
-                link.href = url;
-                document.head.appendChild(link);
-            }
-        }
-
-        function populateFontDropdown() {
-            // Keep the first option as Default
-            while (presentationFontSelect.options.length > 1) {
-                presentationFontSelect.remove(1);
-            }
-            googleFonts.forEach(font => {
-                const opt = document.createElement('option');
-                opt.value = font.css;
-                opt.textContent = font.name;
-                presentationFontSelect.appendChild(opt);
-                ensureGoogleFontLoaded(font.url);
-            });
-        }
-        populateFontDropdown();
-
-        // --- Song List Fetch & Display ---
+        // Update fetchSongListAndContents to store txtFiles globally
         async function fetchSongListAndContents() {
             try {
                 let apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${REPOSITORY_NAME}/contents`;
-                if (FOLDER_PATH) {
-                    apiUrl += `/${FOLDER_PATH}`;
-                }
+                if (FOLDER_PATH) apiUrl += `/${FOLDER_PATH}`;
                 const response = await fetch(apiUrl);
-                if (!response.ok) {
-                    throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
-                }
+                if (!response.ok) throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
                 const files = await response.json();
-                songListElement.innerHTML = ''; // Clear existing list
-
-                if (!Array.isArray(files)) {
-                    console.error('GitHub API response for song list is not an array:', files);
-                    throw new Error('Unexpected response format from GitHub API. Expected an array of files.');
-                }
-
-                // Filter for .txt files
+                songListElement.innerHTML = '';
+                if (!Array.isArray(files)) throw new Error('Unexpected response format from GitHub API.');
                 const txtFiles = files.filter(file => file.type === 'file' && file.name.endsWith('.txt'));
+                allTxtFiles = txtFiles; // <-- Store for search
                 if (txtFiles.length === 0) {
                     songListElement.innerHTML = '<li>No .txt songs found in this repository/folder.</li>';
                     return;
                 }
-
-                // Fetch all song contents in parallel
                 await Promise.all(txtFiles.map(async file => {
                     try {
                         const res = await fetch(file.download_url);
                         const content = await res.text();
-                        songCache.set(file.name, {
-                            name: file.name.replace('.txt', ''),
-                            content,
-                            url: file.download_url
-                        });
-                    } catch (err) {
-                        songCache.set(file.name, {
-                            name: file.name.replace('.txt', ''),
-                            content: '[Error loading song]',
-                            url: file.download_url
-                        });
+                        songCache.set(file.name, { name: file.name.replace('.txt', ''), content, url: file.download_url });
+                    } catch {
+                        songCache.set(file.name, { name: file.name.replace('.txt', ''), content: '[Error loading song]', url: file.download_url });
                     }
                 }));
-
-                // Populate the list
-                txtFiles.forEach(file => {
-                    const listItem = document.createElement('li');
-                    listItem.textContent = file.name.replace('.txt', '');
-                    listItem.dataset.filename = file.name;
-                    listItem.addEventListener('click', () => displaySongContentFromCache(file.name));
-                    songListElement.appendChild(listItem);
-                });
+                renderSongList(allTxtFiles); // <-- Use allTxtFiles here
             } catch (error) {
-                console.error('Error fetching song list:', error);
-                songListElement.innerHTML = `<li class="error">Error loading song list: ${error.message}. Please check your GitHub username, repository name, and folder path.</li>`;
+                songListElement.innerHTML = `<li class="error">Error loading song list: ${error.message}</li>`;
             } finally {
                 updateScrollButtons();
             }
         }
+
+        // Render the song list (filtered or full)
+        function renderSongList(files) {
+            songListElement.innerHTML = '';
+            files.forEach(file => {
+                const listItem = document.createElement('li');
+                listItem.textContent = file.name.replace('.txt', '');
+                listItem.dataset.filename = file.name;
+                listItem.addEventListener('click', () => displaySongContentFromCache(file.name));
+                songListElement.appendChild(listItem);
+            });
+            updateScrollButtons();
+        }
+
+        // Instant search handler
+        songSearchInput.addEventListener('input', function () {
+            const query = this.value.trim().toLowerCase();
+            clearSearchBtn.style.display = this.value ? 'block' : 'none';
+            if (!query) {
+                renderSongList(allTxtFiles);
+                return;
+            }
+            const filtered = allTxtFiles.filter(file => {
+                const title = file.name.replace('.txt', '').toLowerCase();
+                const song = songCache.get(file.name);
+                const content = song ? song.content.toLowerCase() : '';
+                return title.includes(query) || content.includes(query);
+            });
+            renderSongList(filtered);
+        });
+
+        clearSearchBtn.addEventListener('click', function () {
+            songSearchInput.value = '';
+            clearSearchBtn.style.display = 'none';
+            renderSongList(allTxtFiles);
+            songSearchInput.focus();
+        });
 
         // --- Song Content Display ---
         function displaySongContentFromCache(filename) {
