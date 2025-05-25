@@ -12,7 +12,7 @@
         @font-face {
             font-family: 'EnglishFont';
             src: local('Arial'), local('Helvetica'), sans-serif;
-            unicode-range: U+0000-00FF;
+            unicode-range: U+0000 -00FF;
             /* Basic Latin */
         }
 
@@ -181,6 +181,12 @@
             box-sizing: border-box;
         }
 
+        /* Hide presentation controls on mobile */
+        #presentation-controls {
+            display: none;
+        }
+
+
         /* --- Mobile Responsive Styles --- */
         @media (max-width: 600px) {
             body {
@@ -222,6 +228,11 @@
                 flex-shrink: 0;
                 box-sizing: border-box;
             }
+
+            /* Show back button on mobile */
+            #back-btn {
+                display: block;
+            }
         }
     </style>
 </head>
@@ -240,24 +251,44 @@
             Theme: System Default
         </button>
     </div>
+
     <div id="main-pane">
-        <div id="text-size-controls"
+        <div id="controls"
             style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 8px;">
-            <button id="decrease-text-btn" type="button" title="Decrease text size" aria-label="A-">A-</button>
-            <button id="increase-text-btn" type="button" title="Increase text size" aria-label="A+">A+</button>
+            <button id="presentation-mode-toggle" type="button" style="display: none;">Presentation Mode: OFF</button>
+            <div id="presentation-controls" style="display: none; align-items: center; gap: 8px;">
+                <!-- <label for="display-select">Display:</label>
+                <select id="display-select"></select> -->
+                <button id="decrease-presentation-text-btn" type="button" title="Decrease presentation text size"
+                    aria-label="A-">A-</button>
+                <button id="increase-presentation-text-btn" type="button" title="Increase presentation text size"
+                    aria-label="A+">A+</button>
+            </div>
+            <div id="text-size-controls" style="display: flex; align-items: center; gap: 8px;">
+                <button id="decrease-text-btn" type="button" title="Decrease text size" aria-label="A-">A-</button>
+                <button id="increase-text-btn" type="button" title="Increase text size" aria-label="A+">A+</button>
+            </div>
+            <button id="back-btn" type="button">← Back to list</button>
         </div>
-        <button id="back-btn" type="button">← Back to list</button>
-        <pre id="song-content"></pre> <!-- Initial content set by JS -->
+        
+        <div id="song-content"></div> <!-- Changed from pre to div -->
+
     </div>
     <script>
         // Replace with your GitHub repository details
         const GITHUB_USERNAME = 'ehowsecunderabad'; // e.g., 'octocat'
         const REPOSITORY_NAME = 'songs'; // e.g., 'my-songs'
-        const FOLDER_PATH = ''; // e.g., 'songs' or leave empty for root
+        const FOLDER_PATH = 'songfiles'; // e.g., 'songs' or leave empty for root
         const songListElement = document.getElementById('song-list');
         const songContentElement = document.getElementById('song-content');
         const sidebar = document.getElementById('sidebar');
         const mainPane = document.getElementById('main-pane');
+        const controlsDiv = document.getElementById('controls');
+        const presentationModeToggle = document.getElementById('presentation-mode-toggle');
+        const presentationControlsDiv = document.getElementById('presentation-controls');
+        // const displaySelect = document.getElementById('display-select');
+        const increasePresentationTextBtn = document.getElementById('increase-presentation-text-btn');
+        const decreasePresentationTextBtn = document.getElementById('decrease-presentation-text-btn');
         const backBtn = document.getElementById('back-btn');
         const themeToggleBtn = document.getElementById('theme-toggle-btn');
         const scrollBottomBtn = document.getElementById('scroll-bottom-btn');
@@ -273,11 +304,9 @@
         const INITIAL_SONG_CONTENT_MESSAGE = 'Select a song from the list to view its content.';
         let isSongViewActiveOnMobile = false; // Tracks if song content is the main view on mobile
         let currentFontSize = 1; // em
-
-        // Helper to check if mobile
-        function isMobile() {
-            return window.innerWidth <= 600;
-        }
+        let presentationWindow = null;
+        let presentationFontSize = 1.5; // em for presentation
+        let isPresentationMode = false;
 
         // Function to fetch the list of files (songs) from GitHub API
         async function fetchSongList() {
@@ -291,13 +320,21 @@
                     throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
                 }
                 const files = await response.json();
-                // Filter for .txt files and populate the list
                 songListElement.innerHTML = ''; // Clear existing list
+
+                // Check if files is an array BEFORE attempting to filter it
+                if (!Array.isArray(files)) {
+                    console.error('GitHub API response for song list is not an array:', files);
+                    throw new Error('Unexpected response format from GitHub API. Expected an array of files.');
+                }
+
+                // Filter for .txt files and populate the list
                 const txtFiles = files.filter(file => file.type === 'file' && file.name.endsWith('.txt'));
                 if (txtFiles.length === 0) {
                     songListElement.innerHTML = '<li>No .txt songs found in this repository/folder.</li>';
                     return;
                 }
+
                 txtFiles.forEach(file => {
                     const listItem = document.createElement('li');
                     listItem.textContent = file.name.replace('.txt', ''); // Display without .txt extension
@@ -316,14 +353,34 @@
         // Function to fetch and display the content of a song
         async function displaySongContent(url) {
             songContentElement.classList.remove('error'); // Clear previous error state
+            songContentElement.innerHTML = ''; // Clear existing content
             try {
-                songContentElement.textContent = 'Loading song...';
+                songContentElement.innerHTML = '<p>Loading song...</p>';
                 const response = await fetch(url);
                 if (!response.ok) {
                     throw new Error(`Failed to load song content: ${response.status} ${response.statusText}`);
                 }
                 const content = await response.text();
-                songContentElement.textContent = content;
+                // Split content by lines and create paragraphs
+                const paragraphs = content.split(/\n\s*\n/);
+
+                // Clear "Loading song..." message and prepare for new content
+                songContentElement.innerHTML = '';
+
+                const paragraphElements = paragraphs.map(paragraphText => {
+                    // Trim whitespace from the start and end of the paragraph
+                    const trimmedParagraph = paragraphText.trim();
+                    if (!trimmedParagraph) return null; // Skip empty paragraphs, return null for filtering
+
+                    const p = document.createElement('p');
+                    // Replace single newlines within a paragraph with <br> for line breaks
+                    p.innerHTML = trimmedParagraph.replace(/\n/g, '<br>');
+                    // Add click listener to the paragraph element
+                    p.addEventListener('click', () => displayParagraphInPresentation(p.innerHTML)); // Pass HTML content
+                    return p;
+                }).filter(pElement => pElement !== null); // Filter out null elements
+
+                paragraphElements.forEach(pElement => songContentElement.appendChild(pElement));
                 isSongViewActiveOnMobile = true;
                 updateAppView();
             } catch (error) {
@@ -331,6 +388,11 @@
                 songContentElement.textContent = `Error loading song: ${error.message}`;
                 songContentElement.classList.add('error');
             }
+        }
+
+        // Helper to check if mobile
+        function isMobile() {
+            return window.innerWidth <= 600;
         }
 
         // Centralized function to update the view based on screen size and song display state
@@ -342,12 +404,14 @@
                     mainPane.style.display = 'block';
                     mainPane.style.height = '100vh'; // Ensure main pane takes full height
                     backBtn.style.display = 'block';
+                    presentationModeToggle.style.display = 'none'; // Hide presentation toggle on mobile
                 } else { // List view on mobile
                     sidebar.style.display = 'flex'; // #sidebar is a flex container
                     mainPane.style.display = 'none';
                     backBtn.style.display = 'none';
                 }
             } else { // Desktop view
+                presentationModeToggle.style.display = 'block'; // Show presentation toggle on desktop
                 sidebar.style.display = 'flex';
                 mainPane.style.display = 'block';
                 mainPane.style.height = ''; // Reset height, let CSS (flex-grow) handle it
@@ -359,7 +423,7 @@
         backBtn.addEventListener('click', () => {
             // This button is only visible on mobile when a song is active
             isSongViewActiveOnMobile = false;
-            songContentElement.textContent = INITIAL_SONG_CONTENT_MESSAGE;
+            songContentElement.innerHTML = `<p>${INITIAL_SONG_CONTENT_MESSAGE}</p>`;
             updateAppView();
         });
         // Scroll to bottom
@@ -396,7 +460,7 @@
         }
         // Update buttons on scroll and after loading songs
         songListElement.addEventListener('scroll', updateScrollButtons);
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             songContentElement.textContent = INITIAL_SONG_CONTENT_MESSAGE;
             fetchSongList();
             loadTheme();
@@ -437,6 +501,11 @@
             }
         });
 
+        // Text size controls for main pane
+        songContentElement.style.fontSize = currentFontSize + 'em'; // Initialize font size
+        songContentElement.style.lineHeight = '1.5'; // Ensure line height is set
+
+
         function updateFontSize() {
             songContentElement.style.fontSize = currentFontSize + 'em';
         }
@@ -454,8 +523,128 @@
             }
         });
 
-        // Initialize font size on load
-        document.addEventListener('DOMContentLoaded', updateFontSize);
+        // Presentation Mode Logic
+        presentationModeToggle.addEventListener('click', async () => {
+            isPresentationMode = !isPresentationMode;
+            presentationModeToggle.textContent = `Presentation Mode: ${isPresentationMode ? 'ON' : 'OFF'}`;
+
+            // Hide presentation controls initially
+            presentationControlsDiv.style.display = 'none';
+
+            if (isPresentationMode) {
+                // Open a new window with minimal features
+                openPresentationWindow();
+                // Show presentation controls only if window opened successfully
+                if (presentationWindow && !presentationWindow.closed) {
+                    presentationControlsDiv.style.display = 'flex';
+                }
+            } else {
+                // Close presentation window
+                if (presentationWindow && !presentationWindow.closed) {
+                    presentationWindow.close();
+                }
+            }
+        });
+
+        async function openPresentationWindow() {
+            if (!isPresentationMode) return;
+
+            // Features for a minimal window (no toolbar, location bar, etc.)
+            const windowFeatures = 'menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes';
+
+            // Open a new window
+            presentationWindow = window.open('', '_blank', windowFeatures);
+            /*
+                        // The following block for specific display placement is commented out.
+                        // If re-enabled, ensure `targetDisplay` is correctly defined and handled.
+                        // const displays = await navigator.getDisplays();
+                        // const targetDisplay = displays.find(d => d.id === parseInt(selectedDisplayId));
+                        // if (targetDisplay) {
+                        //     presentationWindow = window.open('', '_blank', `left=${targetDisplay.bounds.x},top=${targetDisplay.bounds.y},width=${targetDisplay.bounds.width},height=${targetDisplay.bounds.height}`);
+                        // } // else handle error or use the default window
+            */
+
+            if (presentationWindow) {
+                presentationWindow.document.title = "Presentation";
+                presentationWindow.document.body.style.cssText = `
+                    margin: 0;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    height: 100vh;
+                    background-color: black;
+                    color: white;
+                    font-family: 'Noto Sans Telugu', 'Roboto', Arial, sans-serif;
+                    font-size: ${presentationFontSize}em;
+                    text-align: center;
+                    white-space: pre-wrap; /* Allow wrapping */
+                    padding: 20px; /* Add some padding */ /* Keep padding */
+                    box-sizing: border-box;
+                `;
+                presentationWindow.document.body.innerHTML = '<div id="presentation-text"></div>';
+            } else {
+                alert("Could not open presentation window. Please allow pop-ups for this site.");
+                isPresentationMode = false;
+                presentationModeToggle.textContent = 'Presentation Mode: OFF';
+                presentationControlsDiv.style.display = 'none';
+            }
+        }
+
+        function displayParagraphInPresentation(paragraphHtml) {
+            if (presentationWindow && !presentationWindow.closed) {
+                const presentationTextDiv = presentationWindow.document.getElementById('presentation-text');
+                if (presentationTextDiv) {
+                    presentationTextDiv.innerHTML = paragraphHtml; // Use innerHTML to render <br>
+                }
+            }
+        }
+
+        // Presentation text size controls
+        increasePresentationTextBtn.addEventListener('click', () => {
+            if (presentationFontSize < 5) { // Set a max size
+                presentationFontSize += 0.2;
+                if (presentationWindow && !presentationWindow.closed) {
+                    presentationWindow.document.body.style.fontSize = presentationFontSize + 'em';
+                }
+            }
+        });
+
+        decreasePresentationTextBtn.addEventListener('click', () => {
+            if (presentationFontSize > 0.5) { // Set a min size
+                presentationFontSize -= 0.2;
+                if (presentationWindow && !presentationWindow.closed) {
+                    presentationWindow.document.body.style.fontSize = presentationFontSize + 'em';
+                }
+            }
+        });
+
+        // Ensure presentation window closes if the main window closes
+        window.addEventListener('beforeunload', () => {
+            if (presentationWindow && !presentationWindow.closed) {
+                presentationWindow.close();
+            }
+        });
+
+        // Add styles for clickable paragraphs in main pane
+        const styleSheet = document.createElement("style");
+        styleSheet.type = "text/css";
+        styleSheet.innerText = `
+            #song-content p {
+                cursor: pointer;
+                margin: 0 0 1em 0; /* Add space between paragraphs */
+                padding: 0;
+                transition: background-color 0.2s ease;
+            }
+            #song-content p:hover {
+                background-color: var(--bg-hover);
+            }
+        `;
+        document.head.appendChild(styleSheet);
+
+        // Initial setup
+        document.addEventListener('DOMContentLoaded', () => {
+            updateFontSize(); // Initialize main pane font size
+        });
     </script>
 </body>
 
